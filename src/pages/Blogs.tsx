@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react'
 import SectionReveal from '../components/ui/SectionReveal'
+import TitleReveal from '../components/ui/TitleReveal'
 import rawBlogs from '../data/blogs.json'
 
 export interface BlogPost {
@@ -97,9 +98,13 @@ export default function Blogs() {
             <Sparkles className="w-3.5 h-3.5 text-[var(--accent-orange)]" />
             <span>DISPATCHES & FIELD NOTES</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-semibold text-[var(--text-primary)] tracking-tight leading-[1.1] font-head">
+          <TitleReveal
+            as="h1"
+            waitForPreloader
+            className="text-3xl sm:text-5xl font-semibold text-[var(--text-primary)] tracking-tight leading-[1.1] font-head"
+          >
             Research Blogs & Dispatches
-          </h1>
+          </TitleReveal>
         </SectionReveal>
 
         <SectionReveal delay={0.16}>
