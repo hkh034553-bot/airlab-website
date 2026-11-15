@@ -17,10 +17,10 @@
       "Muhammad Rehan (CT-23039)",
       "Qazi Asim Kamal (CT-23044)"
     ],
-    "funding": "Indigenous Dataset Collection & Research Project",
-    "grantSupplier": "Indigenous Dataset Collection & Research Project",
+    "funding": "Departmental / Self-Funded",
+    "grantSupplier": "",
     "grantAmount": "",
-    "pi": "Dr. Murk Marvi",
+    "pi": "",
     "funderUrl": "",
     "timeTaken": "Aug 26 - May 27",
     "startDate": "Aug 2026",
@@ -56,8 +56,8 @@
       "Muhammad Huzaifa Baig (DT-23018)",
       "Muhammad Uzaim Naseem (DT-23047)"
     ],
-    "funding": "On-Premises SLM Infrastructure",
-    "grantSupplier": "On-Premises SLM Infrastructure",
+    "funding": "Departmental / Self-Funded",
+    "grantSupplier": "",
     "grantAmount": "",
     "pi": "",
     "funderUrl": "",
@@ -94,10 +94,10 @@
       "Fatima (CT-23012)",
       "Huda Imran (CT-23015)"
     ],
-    "funding": "LLM Security & Agent Provenance Research",
-    "grantSupplier": "LLM Security & Agent Provenance Research",
+    "funding": "Departmental / Self-Funded",
+    "grantSupplier": "",
     "grantAmount": "",
-    "pi": "Dr. Murk Marvi (Co-Supervisor: Ms. Dua Agha)",
+    "pi": "",
     "funderUrl": "",
     "timeTaken": "Aug 26 - May 27",
     "startDate": "Aug 2026",
@@ -126,15 +126,15 @@
     ],
     "description": "Naqshkaar is an AI interior design platform for Pakistan that generates 3D room designs from a real catalogue of purchasable local products, scaled to true room dimensions and checked against space and budget limits. Unlike tools such as Planner 5D or RoomGPT, it uses PKR prices, accounts for local needs like ceiling-fan clearance, AC and UPS placement, and prayer space, and lets users pick each item from AI-shortlisted options. The result is a design they can visualize and buy, with an itemised cost estimate and direct purchase links.",
     "teamMembers": [
-      "Mureed Hussain (CT-23036)",
       "Muhammad Sami (CT-23027)",
       "Faiq Ahmed (CT-23030)",
+      "Mureed Hussain (Team Lead, CT-23036)",
       "Muhammad Sameed (CT-23046)"
     ],
-    "funding": "Multimodal Generative 3D Platform",
-    "grantSupplier": "Multimodal Generative 3D Platform",
+    "funding": "Departmental / Self-Funded",
+    "grantSupplier": "",
     "grantAmount": "",
-    "pi": "Dr. Murk Marvi",
+    "pi": "",
     "industryAdvisor": "Muzammil Jethwa (Senior Solutions Engineer, Mazik Global)",
     "funderUrl": "",
     "timeTaken": "Aug 26 - May 27",
@@ -168,11 +168,12 @@
     "funding": "Departmental / Self-Funded",
     "grantSupplier": "",
     "grantAmount": "",
-    "pi": "Dr. Murk Marvi",
+    "pi": "",
     "industryAdvisor": "N/A",
     "funderUrl": "",
-    "timeTaken": "2026 — 2027",
+    "timeTaken": "Aug 26 - May 27",
     "startDate": "Aug 2026",
+    "endDate": "May 2027",
     "coverImage": "/projects/cortex.jpg",
     "images": [
       "/projects/cortex.jpg"
@@ -200,11 +201,12 @@
     "funding": "Departmental / Self-Funded",
     "grantSupplier": "",
     "grantAmount": "",
-    "pi": "Dr. Murk Marvi",
+    "pi": "",
     "industryAdvisor": "N/A",
     "funderUrl": "",
-    "timeTaken": "2026 — 2027",
+    "timeTaken": "Aug 26 - May 27",
     "startDate": "Aug 2026",
+    "endDate": "May 2027",
     "coverImage": "/projects/taleem-e-aam.jpg",
     "images": [
       "/projects/taleem-e-aam.jpg"
@@ -216,38 +218,6 @@
       "SLM",
       "Reinforcement Learning",
       "Model-Craft"
-    ]
-  },
-  {
-    "id": "PRJ-1",
-    "title": "Connected Identity Intelligence Platform for Digital Investigation",
-    "category": "Funded",
-    "programTitle": "Sindh Research Support Program",
-    "status": "Ongoing",
-    "areas": [
-      "Foundational Models & NLP",
-      "Cyber",
-      "AI Safety & Alignment",
-      "Software Development"
-    ],
-    "description": "This project addresses three under-studied identity resolution problems in Pakistan by building three independent AI services: multilingual entity resolution with Urdu/English NER and CNIC-aware matching, LLM-driven generation of Urdu and English name variants (such as Mubashir, Mubashar and Mubasher) with confidence scores, and face matching with demographic-fairness auditing on a regionally representative test set. Each service is evaluated on curated benchmarks and backed by a peer-reviewed publication. Deliverables include trained models, annotated benchmark datasets released for reuse, model cards, and a published API specification so any compliant application can integrate the services.",
-    "funding": "Government of Sindh — Sindh Higher Education Commission (Sindh HEC)",
-    "grantSupplier": "Government of Sindh — Sindh Higher Education Commission (Sindh HEC)",
-    "grantAmount": "Rs. 5 million",
-    "pi": "Dr. Murk Marvi",
-    "funderUrl": "https://sindhhec.gov.pk/",
-    "timeTaken": "June 26 - Present",
-    "startDate": "June 2026",
-    "coverImage": "https://i.ibb.co/0pLB2b49/project-04.jpg",
-    "images": [
-      "https://i.ibb.co/0pLB2b49/project-04.jpg"
-    ],
-    "tags": [
-      "Multilingual NER",
-      "Identity Intelligence",
-      "Urdu NLP",
-      "Face Matching",
-      "Sindh HEC"
     ]
   },
   {
@@ -283,6 +253,38 @@
     ]
   },
   {
+    "id": "PRJ-1",
+    "title": "Connected Identity Intelligence Platform for Digital Investigation",
+    "category": "Funded",
+    "programTitle": "Sindh Research Support Program",
+    "status": "Ongoing",
+    "areas": [
+      "Foundational Models & NLP",
+      "Cyber",
+      "AI Safety & Alignment",
+      "Software Development"
+    ],
+    "description": "This project addresses three under-studied identity resolution problems in Pakistan by building three independent AI services: multilingual entity resolution with Urdu/English NER and CNIC-aware matching, LLM-driven generation of Urdu and English name variants (such as Mubashir, Mubashar and Mubasher) with confidence scores, and face matching with demographic-fairness auditing on a regionally representative test set. Each service is evaluated on curated benchmarks and backed by a peer-reviewed publication. Deliverables include trained models, annotated benchmark datasets released for reuse, model cards, and a published API specification so any compliant application can integrate the services.",
+    "funding": "Government of Sindh — Sindh Higher Education Commission (Sindh HEC)",
+    "grantSupplier": "Government of Sindh — Sindh Higher Education Commission (Sindh HEC)",
+    "grantAmount": "Rs. 5 million",
+    "pi": "Dr. Murk Marvi",
+    "funderUrl": "https://sindhhec.gov.pk/",
+    "timeTaken": "June 26 - Present",
+    "startDate": "June 2026",
+    "coverImage": "https://i.ibb.co/0pLB2b49/project-04.jpg",
+    "images": [
+      "https://i.ibb.co/0pLB2b49/project-04.jpg"
+    ],
+    "tags": [
+      "Multilingual NER",
+      "Identity Intelligence",
+      "Urdu NLP",
+      "Face Matching",
+      "Sindh HEC"
+    ]
+  },
+  {
     "id": "PRJ-3",
     "title": "AutoGradeHub – Automated Assignment Grading and Feedback System",
     "category": "Undergraduate",
@@ -300,8 +302,8 @@
       "Muhammad Ali (CT-22044)",
       "Zaid Rahman (CT-22047)"
     ],
-    "funding": "Undergraduate FYDP",
-    "grantSupplier": "Undergraduate FYDP",
+    "funding": "Departmental / Self-Funded",
+    "grantSupplier": "",
     "grantAmount": "",
     "pi": "",
     "funderUrl": "",
@@ -337,8 +339,8 @@
       "Muhammad Azlan Asim (CT-22036)",
       "Shahzaib Ahmed (CT-22042)"
     ],
-    "funding": "Undergraduate FYDP (in collaboration with SIEHS)",
-    "grantSupplier": "Undergraduate FYDP (in collaboration with SIEHS)",
+    "funding": "Departmental / Self-Funded",
+    "grantSupplier": "",
     "grantAmount": "",
     "pi": "",
     "funderUrl": "",
@@ -374,8 +376,8 @@
       "Faraz Ahmed (AI-22028)",
       "Sajeel Tariq (AI-22029)"
     ],
-    "funding": "Undergraduate FYDP",
-    "grantSupplier": "Undergraduate FYDP",
+    "funding": "Departmental / Self-Funded",
+    "grantSupplier": "",
     "grantAmount": "",
     "pi": "",
     "funderUrl": "",
@@ -410,9 +412,9 @@
       "Haiqa Siddiqua (CT-22071)",
       "Muhammad Zohaib Khan (CT-22072)"
     ],
-    "funding": "NEDAASC Funded",
-    "grantSupplier": "NEDAASC Funded",
-    "grantAmount": "",
+    "funding": "NEDAASC",
+    "grantSupplier": "NEDAASC",
+    "grantAmount": "Rs. 97,000",
     "pi": "",
     "funderUrl": "",
     "timeTaken": "Aug 25 - May 26",

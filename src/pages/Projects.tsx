@@ -150,6 +150,27 @@ function projectMatchesResearchArea(project: ProjectItem, targetArea: string): b
   return false
 }
 
+function cleanOptionalValue(val?: string): string {
+  if (!val) return ''
+  const trimmed = String(val).trim()
+  if (!trimmed || trimmed.toLowerCase() === 'na' || trimmed.toLowerCase() === 'n/a') {
+    return ''
+  }
+  return trimmed
+}
+
+function formatGrantAmount(amount?: string): string {
+  const cleaned = cleanOptionalValue(amount)
+  if (!cleaned) return ''
+  if (/^\d[\d,]*$/.test(cleaned)) {
+    const num = Number(cleaned.replace(/,/g, ''))
+    if (!Number.isNaN(num) && num > 0) {
+      return `Rs. ${num.toLocaleString('en-US')}`
+    }
+  }
+  return cleaned
+}
+
 function getCanonicalProjectKey(title?: string): string {
   if (!title) return ''
   const clean = title.trim().toLowerCase()
@@ -233,10 +254,25 @@ export default function Projects() {
                 : localMembers.length > apiMembers.length
                   ? localMembers
                   : apiMembers
+            const apiFunding = cleanOptionalValue(p.funding)
+            const apiSupplier = cleanOptionalValue(p.grantSupplier)
+            const apiAmount = cleanOptionalValue(p.grantAmount)
+            const funding =
+              apiFunding ||
+              apiSupplier ||
+              cleanOptionalValue(local?.funding) ||
+              'Departmental / Self-Funded'
+            const grantSupplier = apiSupplier || cleanOptionalValue(local?.grantSupplier)
+            const grantAmount = formatGrantAmount(apiAmount || cleanOptionalValue(local?.grantAmount))
 
             return {
               ...local,
               ...p,
+              funding,
+              grantSupplier,
+              grantAmount,
+              startDate: local?.startDate || p.startDate,
+              endDate: local?.endDate || p.endDate,
               coverImage:
                 (useLocalCover
                   ? local!.coverImage
@@ -390,6 +426,7 @@ export default function Projects() {
           p.title.toLowerCase().includes(q) ||
           p.description.toLowerCase().includes(q) ||
           Boolean(p.funding && p.funding.toLowerCase().includes(q)) ||
+          Boolean(p.teamMembers?.some(m => m.toLowerCase().includes(q))) ||
           Boolean(p.tags?.some(t => t.toLowerCase().includes(q))) ||
           getProjectAreas(p).some(a => a.toLowerCase().includes(q))
         if (!matchesSearch) return false
@@ -549,7 +586,7 @@ export default function Projects() {
                     <div className="flex items-center justify-between">
                       <span className="text-[var(--text-subtle)]">Funding:</span>
                       <span className="font-semibold text-[var(--accent-orange)] truncate max-w-[180px]">
-                        {proj.funding}
+                        {cleanOptionalValue(proj.funding) || cleanOptionalValue(proj.grantSupplier) || 'Departmental / Self-Funded'}
                       </span>
                     </div>
                   </div>
@@ -668,11 +705,11 @@ export default function Projects() {
                       <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-2xl">
                         <span className="text-[var(--text-subtle)] block mb-1">GRANT & FUNDING SOURCE</span>
                         <Link to="/grants" onClick={() => setSelectedProject(null)} className="font-semibold text-[var(--accent-orange)] hover:underline">
-                          {selectedProject.funding}
+                          {cleanOptionalValue(selectedProject.funding) || cleanOptionalValue(selectedProject.grantSupplier) || 'Departmental / Self-Funded'}
                         </Link>
-                        {selectedProject.grantAmount && selectedProject.grantAmount !== 'NA' && (
+                        {formatGrantAmount(selectedProject.grantAmount) && (
                           <div className="text-[11px] text-[var(--text-primary)] font-bold mt-1">
-                            Amount: {selectedProject.grantAmount}
+                            Amount: {formatGrantAmount(selectedProject.grantAmount)}
                           </div>
                         )}
                       </div>
