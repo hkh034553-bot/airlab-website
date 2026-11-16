@@ -21,8 +21,8 @@ export interface TiltCardProps extends React.HTMLAttributes<HTMLDivElement> {
   onHoverChange?: (hovering: boolean) => void;
 }
 
-const MAX_TILT = 11;
-const HOVER_SCALE = 1.045;
+const MAX_TILT = 3.5;
+const HOVER_SCALE = 1.012;
 const TOUCH_HOLD_MS = 400;
 
 export const OptimizedTiltCard: React.FC<TiltCardProps> = ({
@@ -179,7 +179,7 @@ export const OptimizedTiltCard: React.FC<TiltCardProps> = ({
   const cardStyle: React.CSSProperties = {
     ...style,
     transform:
-      "perspective(1000px) rotateX(var(--rotate-x, 0deg)) rotateY(var(--rotate-y, 0deg)) scale(var(--card-scale, 1))",
+      "perspective(1200px) rotateX(var(--rotate-x, 0deg)) rotateY(var(--rotate-y, 0deg)) scale(var(--card-scale, 1))",
     transition: "transform 0.35s cubic-bezier(0.23, 1, 0.32, 1)",
     "--pointer-x": "50%",
     "--pointer-y": "50%",
