@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, GraduationCap, Calendar, Search, Sparkles, FileText, Loader2, X } from 'lucide-react'
+import { Mail, Search, Loader2, X } from 'lucide-react'
 import type { TeamMemberData } from '../types/data'
 import { getMemberAvatar, DEFAULT_AVATAR } from '../lib/placeholders'
 import { normalizeLinkedInUrl } from '../lib/utils'
@@ -18,6 +18,66 @@ const Linkedin = ({ className = 'w-3.5 h-3.5' }: { className?: string }) => (
 )
 
 type TabType = 'faculty' | 'interns' | 'previous'
+
+interface MemberPortraitCardProps {
+  member: TeamMemberEntity
+  isHighlighted: boolean
+}
+
+function MemberPortraitCard({ member, isHighlighted }: MemberPortraitCardProps) {
+  const linkedInUrl = member.getLinkedInUrl()
+  const fallbackUrl = member.getPrimaryActionUrl()
+  const targetUrl = linkedInUrl || (fallbackUrl !== '#' ? fallbackUrl : null)
+  const isExternal = Boolean(linkedInUrl || (targetUrl && targetUrl.startsWith('http')))
+
+  const cardContent = (
+    <>
+      <div className="aspect-square w-full overflow-hidden bg-[var(--bg-page)] shrink-0">
+        <img
+          src={getMemberAvatar(member.image)}
+          onError={(e) => {
+            e.currentTarget.src = DEFAULT_AVATAR
+          }}
+          alt={member.name}
+          className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+        />
+      </div>
+
+      <div className="px-4 py-3.5 flex-1 flex items-center justify-between gap-2.5 bg-[var(--bg-surface)]">
+        <h3 className="text-sm sm:text-[15px] font-semibold font-head text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors leading-snug truncate">
+          {member.name}
+        </h3>
+        {linkedInUrl && (
+          <Linkedin className="w-4 h-4 shrink-0 text-[var(--text-muted)] group-hover:text-[#0A66C2] transition-colors" />
+        )}
+      </div>
+    </>
+  )
+
+  return (
+    <OptimizedTiltCard
+      id={`member-${member.id}`}
+      className={`rounded-2xl overflow-hidden flex flex-col h-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-all duration-200 ${
+        isHighlighted ? 'ring-2 ring-[var(--accent-orange)] shadow-xl' : ''
+      }`}
+    >
+      {targetUrl ? (
+        <a
+          href={targetUrl}
+          target={isExternal ? '_blank' : undefined}
+          rel={isExternal ? 'noopener noreferrer' : undefined}
+          title={linkedInUrl ? `${member.name} — LinkedIn` : member.name}
+          className="flex flex-col h-full cursor-pointer"
+        >
+          {cardContent}
+        </a>
+      ) : (
+        <div className="flex flex-col h-full">{cardContent}</div>
+      )}
+    </OptimizedTiltCard>
+  )
+}
 
 export default function Team() {
   const [searchParams] = useSearchParams()
@@ -226,9 +286,9 @@ export default function Team() {
             transition={{ duration: 0.25 }}
             className="space-y-8"
           >
-            <div className="max-w-4xl mx-auto space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {facultyMembers.length === 0 && (
-                <div className="text-center py-16 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)]">
+                <div className="col-span-full text-center py-16 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)]">
                   {loading ? (
                     <div className="inline-flex items-center gap-2 text-sm font-sans text-[var(--text-muted)]">
                       <Loader2 className="w-4 h-4 animate-spin text-[var(--accent-orange)]" />
@@ -239,114 +299,13 @@ export default function Team() {
                   )}
                 </div>
               )}
-              {facultyMembers.map(f => {
-                const raw = allMembersRaw.find(m => m.id === f.id)
-                const isHighlighted = highlightedMemberId === f.id
-                return (
-                  <OptimizedTiltCard
-                    id={`member-${f.id}`}
-                    key={f.id}
-                    className={`p-8 sm:p-10 flex flex-col md:flex-row gap-8 items-start transition-colors duration-200 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-3xl hover:border-[var(--accent-orange)]/40 hover:shadow-lg ${
-                      isHighlighted ? 'ring-2 ring-[var(--accent-orange)] shadow-xl' : ''
-                    }`}
-                  >
-                    <div
-                      onClick={() => {
-                        if (f.hasLinkedIn()) window.open(f.getLinkedInUrl()!, '_blank')
-                        else if (f.cvUrl) window.open(f.cvUrl, '_blank')
-                        else if (f.hasEmail()) window.location.href = f.getEmailFallback()!
-                      }}
-                      title="Click to view profile / Resume"
-                      className="w-36 h-36 sm:w-44 sm:h-44 rounded-2xl overflow-hidden border border-[var(--border-hairline)] shrink-0 shadow-sm bg-[var(--bg-page)] cursor-pointer group-hover:scale-102 transition-transform"
-                    >
-                      <img
-                        src={getMemberAvatar(f.image)}
-                        onError={(e) => {
-                          e.currentTarget.src = DEFAULT_AVATAR
-                        }}
-                        alt={f.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-
-                    <div className="flex-1 space-y-4 relative z-10 text-left">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[var(--ink-dark)] text-white flex items-center gap-1.5 shadow-xs">
-                            <GraduationCap className="w-3.5 h-3.5" />
-                            {f.role}
-                          </span>
-                          <span className="px-3 py-1 rounded-full text-xs font-sans font-medium bg-[var(--bg-page)] text-[var(--accent-orange)] border border-[var(--border-hairline)] flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            Active: {raw?.tenure || '2020 — Present'}
-                          </span>
-                        </div>
-
-                        <TitleReveal
-                          as="h2"
-                          className="text-2xl sm:text-3xl font-semibold font-head text-[var(--text-primary)]"
-                        >
-                          {f.name}
-                        </TitleReveal>
-                        <p className="text-sm font-medium text-[var(--text-muted)] mt-1 font-sans">
-                          {f.designation} · {f.department}
-                        </p>
-                      </div>
-
-                      {/* Action buttons: LinkedIn, Email, Resume */}
-                      <div className="pt-4 border-t border-[var(--border-hairline)] flex flex-wrap items-center gap-2.5 text-xs font-sans">
-                        {f.hasLinkedIn() ? (
-                          <InteractiveHoverButton
-                            href={f.getLinkedInUrl()!}
-                            variant="primary"
-                            size="sm"
-                            icon={<Linkedin className="w-3.5 h-3.5" />}
-                            text="LinkedIn"
-                            className="h-8.5"
-                          />
-                        ) : (
-                          <span className="h-8.5 px-3 rounded-full bg-[var(--bg-page)] text-[var(--text-subtle)] text-xs inline-flex items-center gap-1.5 border border-[var(--border-hairline)] opacity-50 cursor-not-allowed select-none">
-                            <Linkedin className="w-3.5 h-3.5" />
-                            <span>LinkedIn</span>
-                          </span>
-                        )}
-
-                        {f.hasEmail() ? (
-                          <InteractiveHoverButton
-                            href={`mailto:${f.email}`}
-                            variant="secondary"
-                            size="sm"
-                            icon={<Mail className="w-3.5 h-3.5 text-[var(--accent-orange)] shrink-0" />}
-                            text={f.email}
-                            className="h-8.5 bg-[var(--bg-page)] font-medium max-w-[220px]"
-                          />
-                        ) : (
-                          <span className="h-8.5 px-3 rounded-full bg-[var(--bg-page)] text-[var(--text-subtle)] text-xs inline-flex items-center gap-1.5 border border-[var(--border-hairline)] opacity-50 cursor-not-allowed select-none">
-                            <Mail className="w-3.5 h-3.5 shrink-0" />
-                            <span>No Email</span>
-                          </span>
-                        )}
-
-                        {f.hasResume() ? (
-                          <InteractiveHoverButton
-                            href={f.cvUrl}
-                            variant="dark"
-                            size="sm"
-                            icon={<FileText className="w-3.5 h-3.5 text-[var(--accent-orange)]" />}
-                            text="Resume"
-                            className="h-8.5"
-                          />
-                        ) : (
-                          <span className="h-8.5 px-3 rounded-full bg-[var(--bg-page)] text-[var(--text-subtle)] text-xs inline-flex items-center gap-1.5 border border-[var(--border-hairline)] opacity-50 cursor-not-allowed select-none">
-                            <FileText className="w-3.5 h-3.5" />
-                            <span>Resume</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </OptimizedTiltCard>
-                )
-              })}
+              {facultyMembers.map(f => (
+                <MemberPortraitCard
+                  key={f.id}
+                  member={f}
+                  isHighlighted={highlightedMemberId === f.id}
+                />
+              ))}
             </div>
           </motion.div>
         )}
@@ -361,7 +320,7 @@ export default function Team() {
             transition={{ duration: 0.25 }}
             className="space-y-8"
           >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredInterns.length === 0 && (
                 <div className="col-span-full text-center py-16 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)]">
                   {loading ? (
@@ -376,122 +335,13 @@ export default function Team() {
                   )}
                 </div>
               )}
-              {filteredInterns.map(intern => {
-                const raw = allMembersRaw.find(m => m.id === intern.id)
-                const isHighlighted = highlightedMemberId === intern.id
-                const primaryUrl = intern.getPrimaryActionUrl()
-
-                return (
-                  <OptimizedTiltCard
-                    id={`member-${intern.id}`}
-                    key={intern.id}
-                    className={`p-6 sm:p-7 rounded-2xl flex flex-col justify-between hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-colors duration-200 bg-[var(--bg-surface)] border border-[var(--border-hairline)] ${
-                      isHighlighted ? 'ring-2 ring-[var(--accent-orange)] shadow-xl' : ''
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-start gap-5 mb-4">
-                        <a
-                          href={primaryUrl}
-                          target={intern.hasLinkedIn() ? '_blank' : undefined}
-                          rel={intern.hasLinkedIn() ? 'noopener noreferrer' : undefined}
-                          className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden shrink-0 bg-[var(--bg-page)] border border-[var(--border-hairline)] group-hover:border-[var(--accent-orange)] shadow-xs transition-all"
-                        >
-                          <img
-                            src={getMemberAvatar(intern.image)}
-                            onError={(e) => {
-                              e.currentTarget.src = DEFAULT_AVATAR
-                            }}
-                            alt={intern.name}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            loading="lazy"
-                          />
-                        </a>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-sans font-semibold bg-[var(--ink-dark)] text-white">
-                              {intern.role}
-                            </span>
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-sans text-[var(--text-subtle)] bg-[var(--bg-page)] border border-[var(--border-hairline)] flex items-center gap-1">
-                              <Calendar className="w-2.5 h-2.5" />
-                              {raw?.tenure || intern.term}
-                            </span>
-                          </div>
-
-                          <h3 className="text-lg sm:text-xl font-semibold font-head text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors truncate">
-                            {intern.name}
-                          </h3>
-
-                          <div className="text-[11px] text-[var(--text-muted)] font-sans mt-0.5">
-                            {intern.department}
-                          </div>
-
-                          {intern.researchFocus && (
-                            <div className="mt-2.5">
-                              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-medium bg-[var(--bg-page)] text-[var(--ink-dark)] border border-[var(--border-hairline)]">
-                                <Sparkles className="w-3 h-3 text-[var(--accent-orange)]" />
-                                {intern.researchFocus}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action buttons: LinkedIn, Email, Resume */}
-                    <div className="pt-3 border-t border-[var(--border-hairline)] flex flex-wrap items-center gap-2 text-xs font-sans">
-                      {intern.hasLinkedIn() ? (
-                        <InteractiveHoverButton
-                          href={intern.getLinkedInUrl()!}
-                          variant="primary"
-                          size="sm"
-                          icon={<Linkedin className="w-3 h-3" />}
-                          text="LinkedIn"
-                          className="h-8"
-                        />
-                      ) : (
-                        <span className="h-8 px-3 rounded-full bg-[var(--bg-page)] text-[var(--text-subtle)] text-xs inline-flex items-center gap-1.5 border border-[var(--border-hairline)] opacity-50 cursor-not-allowed select-none">
-                          <Linkedin className="w-3 h-3" />
-                          <span>LinkedIn</span>
-                        </span>
-                      )}
-
-                      {intern.hasEmail() ? (
-                        <InteractiveHoverButton
-                          href={`mailto:${intern.email}`}
-                          variant="secondary"
-                          size="sm"
-                          icon={<Mail className="w-3 h-3 text-[var(--accent-orange)] shrink-0" />}
-                          text={intern.email}
-                          className="h-8 bg-[var(--bg-page)] font-medium max-w-[190px]"
-                        />
-                      ) : (
-                        <span className="h-8 px-3 rounded-full bg-[var(--bg-page)] text-[var(--text-subtle)] text-xs inline-flex items-center gap-1.5 border border-[var(--border-hairline)] opacity-50 cursor-not-allowed select-none">
-                          <Mail className="w-3 h-3 shrink-0" />
-                          <span>No Email</span>
-                        </span>
-                      )}
-
-                      {intern.hasResume() ? (
-                        <InteractiveHoverButton
-                          href={intern.cvUrl}
-                          variant="dark"
-                          size="sm"
-                          icon={<FileText className="w-3 h-3 text-[var(--accent-orange)]" />}
-                          text="Resume"
-                          className="h-8"
-                        />
-                      ) : (
-                        <span className="h-8 px-3 rounded-full bg-[var(--bg-page)] text-[var(--text-subtle)] text-xs inline-flex items-center gap-1.5 border border-[var(--border-hairline)] opacity-50 cursor-not-allowed select-none">
-                          <FileText className="w-3 h-3" />
-                          <span>Resume</span>
-                        </span>
-                      )}
-                    </div>
-                  </OptimizedTiltCard>
-                )
-              })}
+              {filteredInterns.map(intern => (
+                <MemberPortraitCard
+                  key={intern.id}
+                  member={intern}
+                  isHighlighted={highlightedMemberId === intern.id}
+                />
+              ))}
             </div>
           </motion.div>
         )}
