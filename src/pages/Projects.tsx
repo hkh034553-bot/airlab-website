@@ -375,7 +375,7 @@ export default function Projects() {
         </div>
       )}
 
-      {/* ── Project Cards Grid (Generous 28px Rounded Stone Cards) ── */}
+      {/* ── Project Tiles Grid (Image + Title, Click for Details Modal) ── */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeCategory + query}
@@ -383,10 +383,14 @@ export default function Projects() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-left"
         >
           {filtered.map((proj, idx) => {
             const isOngoing = proj.status === 'Ongoing'
+            const openModal = () => {
+              setSelectedProject(proj)
+              setActiveGalleryIndex(0)
+            }
             return (
               <motion.div
                 key={proj.id}
@@ -394,84 +398,60 @@ export default function Projects() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.32, delay: Math.min(idx * 0.04, 0.24), ease: [0.16, 1, 0.3, 1] }}
-                className="h-full"
               >
                 <OptimizedTiltCard
-                  onClick={() => {
-                    setSelectedProject(proj)
-                    setActiveGalleryIndex(0)
+                  role="button"
+                  tabIndex={0}
+                  onClick={openModal}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      openModal()
+                    }
                   }}
-                  className="h-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-3xl p-6 flex flex-col justify-between hover:border-[var(--accent-orange)]/45 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] transition-colors duration-200 cursor-pointer"
+                  aria-label={`View details for ${proj.title}`}
+                  className="group relative aspect-[4/3] w-full rounded-2xl overflow-hidden border border-[var(--border-hairline)] bg-[var(--bg-surface)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] hover:border-[var(--accent-orange)]/60 transition-all duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-orange)]"
                 >
-                  <div>
-                    {/* Image Cover Banner */}
-                    <div className="relative h-48 w-full rounded-2xl overflow-hidden bg-[var(--bg-page)] mb-5 border border-[var(--border-hairline)]">
-                      <img
-                        src={getProjectCover(proj.coverImage || proj.images?.[0])}
-                        onError={(e) => {
-                          e.currentTarget.src = DEFAULT_PROJECT_COVER
-                        }}
-                        alt={proj.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                  {/* Full-bleed Cover Image */}
+                  <img
+                    src={getProjectCover(proj.coverImage || proj.images?.[0])}
+                    onError={(e) => {
+                      e.currentTarget.src = DEFAULT_PROJECT_COVER
+                    }}
+                    alt={proj.title}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
 
-                      {/* Status badge (Ongoing / Finished) */}
-                      <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 text-[11px] font-sans font-semibold text-[var(--text-primary)] shadow-xs">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-orange)]" />
-                          {proj.category}
-                        </span>
+                  {/* Always-on bottom gradient for title readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10 pointer-events-none" />
 
-                        <span
-                          className={`px-3 py-1 rounded-full text-[10px] font-sans font-semibold flex items-center gap-1.5 ${isOngoing
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-[var(--ink-dark)] text-white'
-                            }`}
-                        >
-                          {isOngoing ? <Clock className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}
-                          {proj.status}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Title & Description */}
-                    <h3 className="text-lg sm:text-xl font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors leading-snug mb-2.5 font-head line-clamp-2">
-                      {proj.title}
-                    </h3>
-
-                    <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed mb-5 line-clamp-3 font-normal">
-                      {proj.description}
-                    </p>
-
-                    {/* Metadata Specs */}
-                    <div className="space-y-1.5 mb-5 text-[12px] font-sans text-[var(--text-muted)] bg-[var(--bg-page)] p-3.5 rounded-2xl border border-[var(--border-hairline)]">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[var(--text-subtle)]">Timeline:</span>
-                        <span className="font-semibold text-[var(--text-primary)]">
-                          {proj.startDate || proj.timeTaken}
-                        </span>
-                      </div>
-                      {proj.funding && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-[var(--text-subtle)]">Funding:</span>
-                          <span className="font-semibold text-[var(--accent-orange)] truncate max-w-[180px]">
-                            {proj.funding}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                  {/* Hover Color Overlay + Centered Cue */}
+                  <div className="absolute inset-0 bg-[var(--accent-orange)]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+                    <span className="text-white text-xs font-sans font-semibold uppercase tracking-[0.2em] border-b border-white/80 pb-1">
+                      View Details
+                    </span>
                   </div>
 
-                  {/* Bottom Action Footer */}
-                  <div className="pt-4 border-t border-[var(--border-hairline)] flex items-center justify-between text-xs font-sans">
-                    <span className="text-[var(--text-subtle)] uppercase tracking-wider text-[11px] font-medium">
-                      {proj.category}
+                  {/* Minimal Status Pill */}
+                  <div className="absolute top-3.5 right-3.5 z-10 pointer-events-none">
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-sans font-semibold flex items-center gap-1 shadow-xs ${
+                        isOngoing
+                          ? 'bg-emerald-600/95 text-white'
+                          : 'bg-black/70 text-white/95 backdrop-blur-xs'
+                      }`}
+                    >
+                      {isOngoing ? <Clock className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}
+                      {proj.status}
                     </span>
-                    <span className="text-[var(--accent-orange)] font-semibold inline-flex items-center gap-1 group-hover:underline">
-                      <span>View Details</span>
-                    </span>
+                  </div>
+
+                  {/* Bottom Title */}
+                  <div className="absolute inset-x-0 bottom-0 z-10 p-5 pointer-events-none">
+                    <h3 className="text-base sm:text-lg font-semibold text-white leading-snug font-head line-clamp-2 drop-shadow-sm">
+                      {proj.title}
+                    </h3>
                   </div>
                 </OptimizedTiltCard>
               </motion.div>
