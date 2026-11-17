@@ -410,7 +410,7 @@ export default function Projects() {
                     }
                   }}
                   aria-label={`View details for ${proj.title}`}
-                  className="group relative aspect-[4/3] w-full rounded-2xl overflow-hidden border border-[var(--border-hairline)] bg-[var(--bg-surface)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] hover:border-[var(--accent-orange)]/60 transition-all duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-orange)]"
+                  className="group relative aspect-square w-full rounded-none overflow-hidden border border-[var(--border-hairline)] bg-[var(--bg-surface)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] hover:border-[var(--accent-orange)]/60 transition-all duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-orange)]"
                 >
                   {/* Full-bleed Cover Image */}
                   <img
