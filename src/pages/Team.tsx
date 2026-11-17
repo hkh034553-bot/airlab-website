@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Search, Loader2, X } from 'lucide-react'
+import { Mail, Search, Loader2, X, ArrowUpRight } from 'lucide-react'
 import type { TeamMemberData } from '../types/data'
 import { getMemberAvatar, DEFAULT_AVATAR } from '../lib/placeholders'
 import { normalizeLinkedInUrl } from '../lib/utils'
@@ -32,7 +32,7 @@ function MemberPortraitCard({ member, isHighlighted }: MemberPortraitCardProps) 
 
   const cardContent = (
     <>
-      <div className="aspect-square w-full overflow-hidden bg-[var(--bg-page)] shrink-0">
+      <div className="relative aspect-square w-full overflow-hidden bg-[var(--bg-page)] shrink-0">
         <img
           src={getMemberAvatar(member.image)}
           onError={(e) => {
@@ -42,6 +42,22 @@ function MemberPortraitCard({ member, isHighlighted }: MemberPortraitCardProps) 
           className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
         />
+
+        {targetUrl && (
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-4">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/95 text-[var(--ink-dark)] text-xs font-sans font-semibold shadow-md translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+              {linkedInUrl ? (
+                <>
+                  <Linkedin className="w-3.5 h-3.5 text-[#0A66C2]" />
+                  <span>Visit LinkedIn</span>
+                </>
+              ) : (
+                <span>View Details</span>
+              )}
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="px-4 py-3.5 flex-1 flex items-center justify-between gap-2.5 bg-[var(--bg-surface)]">
