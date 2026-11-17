@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   Terminal,
   LayoutGrid,
-  SlidersHorizontal,
 } from 'lucide-react'
 import Button from '../components/ui/Button'
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
@@ -22,13 +21,6 @@ import { TiltedGridHero } from '@/components/ui/tilted-grid-hero'
 import { CoverflowCarousel } from '@/components/ui/coverflow-carousel'
 import { HandwritingText } from '@/components/ui/handwriting-text'
 import OptimizedTiltCard from '@/components/ui/optimized-tilt-card'
-import {
-  HoverSlider,
-  HoverSliderImage,
-  HoverSliderImageWrap,
-  TextStaggerHover,
-  useHoverSliderContext,
-} from '@/components/ui/animated-slideshow'
 
 const HERO_CAROUSEL_IMAGES = [
   {
@@ -92,76 +84,9 @@ const coreResearchAreas = [
   },
 ]
 
-function ActiveResearchAreaCaption({
-  onSelectArea,
-}: {
-  onSelectArea: (title: string) => void
-}) {
-  const { activeSlide } = useHoverSliderContext()
-  const active = coreResearchAreas[activeSlide] ?? coreResearchAreas[0]
-
-  return (
-    <OptimizedTiltCard
-      onClick={() => onSelectArea(active.title)}
-      className="mt-3 px-4 py-3 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/45 shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-card)] cursor-pointer transition-colors text-left"
-    >
-      <AnimatePresence mode="wait">
-        <motion.p
-          key={active.title}
-          initial={{ opacity: 0, y: 6, filter: 'blur(4px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, y: -4, filter: 'blur(4px)' }}
-          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-          className="text-[15px] sm:text-base text-[var(--text-muted)] leading-snug font-normal"
-        >
-          {active.desc}
-        </motion.p>
-      </AnimatePresence>
-    </OptimizedTiltCard>
-  )
-}
-
-function ResearchAreaTrackRow({
-  area,
-  index,
-  onSelect,
-}: {
-  area: (typeof coreResearchAreas)[number]
-  index: number
-  onSelect: (title: string) => void
-}) {
-  const { activeSlide, changeSlide } = useHoverSliderContext()
-  const isActive = activeSlide === index
-
-  return (
-    <button
-      type="button"
-      onMouseEnter={() => changeSlide(index)}
-      onFocus={() => changeSlide(index)}
-      onClick={() => onSelect(area.title)}
-      className="group w-full text-left cursor-pointer bg-transparent border-0 py-1 px-0 focus:outline-none flex items-baseline gap-3.5"
-    >
-      <span
-        className={`text-xs font-mono font-semibold tabular-nums transition-colors duration-200 shrink-0 ${isActive
-            ? 'text-[var(--accent-orange)]'
-            : 'text-[var(--text-subtle)]/45 group-hover:text-[var(--accent-orange)]/75'
-          }`}
-      >
-        0{index + 1}
-      </span>
-      <TextStaggerHover
-        index={index}
-        className="font-head text-xl sm:text-2xl xl:text-[28px] font-bold uppercase tracking-tight leading-tight text-[var(--text-primary)]"
-        text={area.title}
-      />
-    </button>
-  )
-}
-
 export default function Home() {
   const navigate = useNavigate()
   const [carouselVersion, setCarouselVersion] = useState<'v1' | 'v2'>('v1')
-  const [researchLayout, setResearchLayout] = useState<'grid' | 'slideshow'>('grid')
 
   const heroOverlay = (
     <div className="relative z-10 flex h-full w-full max-w-4xl mx-auto flex-col items-center justify-center px-6 text-center pointer-events-none">
@@ -405,41 +330,11 @@ export default function Home() {
           </TitleReveal>
 
           <div className="flex items-center gap-3 shrink-0">
-            <div
-              className="inline-flex items-center p-1 rounded-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] shadow-2xs"
-              role="group"
-              aria-label="Core Research Areas layout toggle"
-            >
-              {(
-                [
-                  { id: 'grid', label: 'All Areas', icon: LayoutGrid },
-                  { id: 'slideshow', label: 'Slideshow', icon: SlidersHorizontal },
-                ] as const
-              ).map((opt) => {
-                const isActive = researchLayout === opt.id
-                const OptIcon = opt.icon
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setResearchLayout(opt.id)}
-                    className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer select-none ${isActive
-                        ? 'text-white'
-                        : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-                      }`}
-                  >
-                    {isActive && (
-                      <motion.span
-                        layoutId="researchAreasLayoutTogglePill"
-                        className="absolute inset-0 rounded-full bg-[var(--accent-orange)] shadow-xs"
-                        transition={{ type: 'spring', stiffness: 480, damping: 34 }}
-                      />
-                    )}
-                    <OptIcon className="relative z-10 w-3.5 h-3.5" />
-                    <span className="relative z-10">{opt.label}</span>
-                  </button>
-                )
-              })}
+            <div className="inline-flex items-center p-1 rounded-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white bg-[var(--accent-orange)] shadow-xs select-none">
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>All Areas</span>
+              </span>
             </div>
 
             <Button
@@ -453,117 +348,46 @@ export default function Home() {
           </div>
         </div>
 
-        <AnimatePresence mode="wait">
-          {researchLayout === 'grid' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {coreResearchAreas.map((area, idx) => (
             <motion.div
-              key="research-grid"
-              initial={{ opacity: 0, y: 10 }}
+              key={area.title}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+              transition={{ duration: 0.3, delay: idx * 0.04, ease: [0.16, 1, 0.3, 1] }}
+              className="h-full"
             >
-              {coreResearchAreas.map((area, idx) => (
-                <motion.div
-                  key={area.title}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: idx * 0.04, ease: [0.16, 1, 0.3, 1] }}
-                  className="h-full"
-                >
-                  <OptimizedTiltCard
-                    onClick={() =>
-                      navigate(`/projects?area=${encodeURIComponent(area.title)}`)
-                    }
-                    className="h-full rounded-2xl bg-[var(--bg-surface)]/90 border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/45 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] transition-colors duration-200 cursor-pointer flex flex-col text-left"
-                  >
-                    <div className="relative h-36 sm:h-40 w-full overflow-hidden bg-[var(--ink-dark)]">
-                      <img
-                        src={area.image}
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder-project.svg'
-                        }}
-                        alt={area.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent pointer-events-none" />
-                      <h3 className="absolute bottom-2.5 left-3.5 right-3.5 font-head text-base sm:text-lg font-bold text-white leading-snug drop-shadow-sm">
-                        {area.title}
-                      </h3>
-                    </div>
-                    <div className="px-4 py-3 flex-1 flex items-center">
-                      <p className="text-xs sm:text-[13px] text-[var(--text-muted)] leading-snug font-normal line-clamp-3">
-                        {area.desc}
-                      </p>
-                    </div>
-                  </OptimizedTiltCard>
-                </motion.div>
-              ))}
-            </motion.div>
-          ) : (
-            <motion.div
-              key="research-slideshow"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <HoverSlider className="rounded-3xl bg-[var(--bg-surface)]/80 border border-[var(--border-hairline)] p-5 sm:p-8 shadow-[var(--shadow-card)]">
-                <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-6 lg:gap-10">
-                  {/* Left Column: Staggered Hover Titles */}
-                  <div className="lg:col-span-6 flex flex-col items-start space-y-2 text-left">
-                    {coreResearchAreas.map((area, index) => (
-                      <ResearchAreaTrackRow
-                        key={area.title}
-                        area={area}
-                        index={index}
-                        onSelect={(title) =>
-                          navigate(`/projects?area=${encodeURIComponent(title)}`)
-                        }
-                      />
-                    ))}
-                  </div>
-
-                  {/* Right Column: Clipped Animated Image + Active Area Description */}
-                  <div className="lg:col-span-6 flex flex-col">
-                    <HoverSliderImageWrap className="rounded-2xl overflow-hidden border border-[var(--border-hairline)] shadow-md aspect-[16/10] max-h-[320px] w-full bg-[var(--ink-dark)]">
-                      {coreResearchAreas.map((area, index) => (
-                        <div
-                          key={area.title}
-                          onClick={() =>
-                            navigate(`/projects?area=${encodeURIComponent(area.title)}`)
-                          }
-                          className="cursor-pointer group relative"
-                        >
-                          <HoverSliderImage
-                            index={index}
-                            imageUrl={area.image}
-                            src={area.image}
-                            alt={area.title}
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder-project.svg'
-                            }}
-                            className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
-                            loading="eager"
-                            decoding="async"
-                          />
-                        </div>
-                      ))}
-                    </HoverSliderImageWrap>
-
-                    <ActiveResearchAreaCaption
-                      onSelectArea={(title) =>
-                        navigate(`/projects?area=${encodeURIComponent(title)}`)
-                      }
-                    />
-                  </div>
+              <OptimizedTiltCard
+                onClick={() =>
+                  navigate(`/projects?area=${encodeURIComponent(area.title)}`)
+                }
+                className="h-full rounded-2xl bg-[var(--bg-surface)]/90 border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/45 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] transition-colors duration-200 cursor-pointer flex flex-col text-left"
+              >
+                <div className="relative h-36 sm:h-40 w-full overflow-hidden bg-[var(--ink-dark)]">
+                  <img
+                    src={area.image}
+                    onError={(e) => {
+                      e.currentTarget.src = '/placeholder-project.svg'
+                    }}
+                    alt={area.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent pointer-events-none" />
+                  <h3 className="absolute bottom-2.5 left-3.5 right-3.5 font-head text-base sm:text-lg font-bold text-white leading-snug drop-shadow-sm">
+                    {area.title}
+                  </h3>
                 </div>
-              </HoverSlider>
+                <div className="px-4 py-3 flex-1 flex items-center">
+                  <p className="text-xs sm:text-[13px] text-[var(--text-muted)] leading-snug font-normal line-clamp-3">
+                    {area.desc}
+                  </p>
+                </div>
+              </OptimizedTiltCard>
             </motion.div>
-          )}
-        </AnimatePresence>
+          ))}
+        </div>
       </section>
 
       {/* ── 5. TEAM SHOWCASE (Guided by faculty, driven by students, built for Pakistan) ── */}
