@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Search, Loader2, X, ArrowUpRight } from 'lucide-react'
+import { Mail, Search, Loader2, X } from 'lucide-react'
 import type { TeamMemberData } from '../types/data'
 import { getMemberAvatar, DEFAULT_AVATAR } from '../lib/placeholders'
 import { normalizeLinkedInUrl } from '../lib/utils'
@@ -32,36 +32,38 @@ function MemberPortraitCard({ member, isHighlighted }: MemberPortraitCardProps) 
 
   const cardContent = (
     <>
-      <div className="relative aspect-square w-full overflow-hidden bg-[var(--bg-page)] shrink-0">
-        <img
-          src={getMemberAvatar(member.image)}
-          onError={(e) => {
-            e.currentTarget.src = DEFAULT_AVATAR
-          }}
-          alt={member.name}
-          className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
-          loading="lazy"
-        />
+      <div className="pt-5 px-5 pb-3 flex justify-center bg-[var(--bg-page)]/50 shrink-0">
+        <div className="relative w-36 h-40 sm:w-40 sm:h-44 rounded-2xl overflow-hidden bg-[var(--bg-page)] border border-[var(--border-hairline)] shadow-xs">
+          <img
+            src={getMemberAvatar(member.image)}
+            onError={(e) => {
+              e.currentTarget.src = DEFAULT_AVATAR
+            }}
+            alt={member.name}
+            className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
+            loading="lazy"
+          />
 
-        {targetUrl && (
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-4">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/95 text-[var(--ink-dark)] text-xs font-sans font-semibold shadow-md translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-              {linkedInUrl ? (
-                <>
-                  <Linkedin className="w-3.5 h-3.5 text-[#0A66C2]" />
-                  <span>Visit LinkedIn</span>
-                </>
-              ) : (
-                <span>View Details</span>
-              )}
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </span>
-          </div>
-        )}
+          {targetUrl && (
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 text-[var(--ink-dark)] text-xs font-sans font-semibold shadow-md translate-y-2 group-hover:translate-y-0 transition-transform duration-300 whitespace-nowrap">
+                {linkedInUrl ? (
+                  <>
+                    <Linkedin className="w-3.5 h-3.5 text-[#0A66C2]" />
+                    <span>Visit LinkedIn</span>
+                  </>
+                ) : (
+                  <span>View Details</span>
+                )}
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="px-4 py-3.5 flex-1 flex items-center justify-between gap-2.5 bg-[var(--bg-surface)]">
-        <h3 className="text-sm sm:text-[15px] font-semibold font-head text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors leading-snug truncate">
+        <h3 className="text-sm sm:text-[15px] font-semibold font-head text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors leading-snug line-clamp-2">
           {member.name}
         </h3>
         {linkedInUrl && (
@@ -74,9 +76,8 @@ function MemberPortraitCard({ member, isHighlighted }: MemberPortraitCardProps) 
   return (
     <OptimizedTiltCard
       id={`member-${member.id}`}
-      className={`rounded-2xl overflow-hidden flex flex-col h-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-all duration-200 ${
-        isHighlighted ? 'ring-2 ring-[var(--accent-orange)] shadow-xl' : ''
-      }`}
+      className={`rounded-2xl overflow-hidden flex flex-col h-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-all duration-200 ${isHighlighted ? 'ring-2 ring-[var(--accent-orange)] shadow-xl' : ''
+        }`}
     >
       {targetUrl ? (
         <a
@@ -237,11 +238,10 @@ export default function Team() {
                   setActiveTab(tab.id)
                   setHighlightedMemberId(null)
                 }}
-                className={`relative px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors duration-150 cursor-pointer select-none whitespace-nowrap flex items-center gap-2 ${
-                  isActive
-                    ? 'text-white font-semibold'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-                }`}
+                className={`relative px-4 py-2 rounded-full text-[13.5px] font-medium transition-colors duration-150 cursor-pointer select-none whitespace-nowrap flex items-center gap-2 ${isActive
+                  ? 'text-white font-semibold'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                  }`}
               >
                 {isActive && (
                   <motion.span
@@ -253,9 +253,8 @@ export default function Team() {
                 <span className="relative z-10">{tab.label}</span>
                 {tab.count !== undefined && (
                   <span
-                    className={`relative z-10 text-[11px] font-sans px-2 py-0.5 rounded-full transition-colors ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-[var(--bg-page)] text-[var(--text-muted)] border border-[var(--border-hairline)]'
-                    }`}
+                    className={`relative z-10 text-[11px] font-sans px-2 py-0.5 rounded-full transition-colors ${isActive ? 'bg-white/20 text-white' : 'bg-[var(--bg-page)] text-[var(--text-muted)] border border-[var(--border-hairline)]'
+                      }`}
                   >
                     {tab.count}
                   </span>
@@ -409,34 +408,34 @@ export default function Team() {
                           <tr
                             key={memberKey}
                             id={`member-${memberKey}`}
-                            className={`hover:bg-[var(--bg-page)] transition-colors ${
-                              highlightedMemberId === memberKey || highlightedMemberId === p.id ? 'bg-[var(--accent-orange)]/15 ring-2 ring-[var(--accent-orange)]' : ''
-                            }`}
+                            className={`hover:bg-[var(--bg-page)] transition-colors ${highlightedMemberId === memberKey || highlightedMemberId === p.id ? 'bg-[var(--accent-orange)]/15 ring-2 ring-[var(--accent-orange)]' : ''
+                              }`}
                           >
                             <td className="py-4 px-6 font-semibold text-[var(--text-primary)]">
                               {p.name}
                             </td>
-                          <td className="py-4 px-6 text-[var(--text-muted)] font-sans text-xs">
-                            {p.tenure || 'Former Research Intern'} • {p.department}
-                          </td>
-                          <td className="py-4 px-6 font-sans text-xs text-[var(--text-muted)]">
-                            <a href={`mailto:${p.email}`} className="text-[var(--accent-orange)] hover:underline flex items-center gap-1 font-semibold">
-                              <Mail className="w-3.5 h-3.5 text-[var(--accent-orange)]" />
-                              {p.email}
-                            </a>
-                          </td>
-                          <td className="py-4 px-6 text-right">
-                            <InteractiveHoverButton
-                              href={p.linkedin}
-                              variant="secondary"
-                              size="xs"
-                              icon={<Linkedin className="w-3.5 h-3.5" />}
-                              text="LinkedIn"
-                              className="bg-[var(--bg-page)] text-[var(--ink-dark)] font-medium"
-                            />
-                          </td>
-                        </tr>
-                      )})}
+                            <td className="py-4 px-6 text-[var(--text-muted)] font-sans text-xs">
+                              {p.tenure || 'Former Research Intern'} • {p.department}
+                            </td>
+                            <td className="py-4 px-6 font-sans text-xs text-[var(--text-muted)]">
+                              <a href={`mailto:${p.email}`} className="text-[var(--accent-orange)] hover:underline flex items-center gap-1 font-semibold">
+                                <Mail className="w-3.5 h-3.5 text-[var(--accent-orange)]" />
+                                {p.email}
+                              </a>
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              <InteractiveHoverButton
+                                href={p.linkedin}
+                                variant="secondary"
+                                size="xs"
+                                icon={<Linkedin className="w-3.5 h-3.5" />}
+                                text="LinkedIn"
+                                className="bg-[var(--bg-page)] text-[var(--ink-dark)] font-medium"
+                              />
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 )}
