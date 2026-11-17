@@ -348,45 +348,62 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {coreResearchAreas.map((area, idx) => (
-            <motion.div
-              key={area.title}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: idx * 0.04, ease: [0.16, 1, 0.3, 1] }}
-              className="h-full"
-            >
-              <OptimizedTiltCard
-                onClick={() =>
-                  navigate(`/projects?area=${encodeURIComponent(area.title)}`)
-                }
-                className="h-full rounded-2xl bg-[var(--bg-surface)]/90 border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/45 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] transition-colors duration-200 cursor-pointer flex flex-col text-left"
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+          {coreResearchAreas.map((area, idx) => {
+            const goToArea = () =>
+              navigate(`/projects?area=${encodeURIComponent(area.title)}`)
+            return (
+              <motion.div
+                key={area.title}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: idx * 0.04, ease: [0.16, 1, 0.3, 1] }}
               >
-                <div className="relative h-36 sm:h-40 w-full overflow-hidden bg-[var(--ink-dark)]">
+                <OptimizedTiltCard
+                  role="button"
+                  tabIndex={0}
+                  onClick={goToArea}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      goToArea()
+                    }
+                  }}
+                  aria-label={`View projects in ${area.title}`}
+                  className="group relative aspect-square w-full rounded-none overflow-hidden border border-[var(--border-hairline)] bg-[var(--bg-surface)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] hover:border-[var(--accent-orange)]/60 transition-all duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-orange)]"
+                >
+                  {/* Full-bleed Cover Image */}
                   <img
                     src={area.image}
                     onError={(e) => {
                       e.currentTarget.src = '/placeholder-project.svg'
                     }}
                     alt={area.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
                     decoding="async"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent pointer-events-none" />
-                  <h3 className="absolute bottom-2.5 left-3.5 right-3.5 font-head text-base sm:text-lg font-bold text-white leading-snug drop-shadow-sm">
-                    {area.title}
-                  </h3>
-                </div>
-                <div className="px-4 py-3 flex-1 flex items-center">
-                  <p className="text-xs sm:text-[13px] text-[var(--text-muted)] leading-snug font-normal line-clamp-3">
-                    {area.desc}
-                  </p>
-                </div>
-              </OptimizedTiltCard>
-            </motion.div>
-          ))}
+
+                  {/* Always-on bottom gradient for title readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10 pointer-events-none" />
+
+                  {/* Hover Color Overlay + Centered Cue */}
+                  <div className="absolute inset-0 bg-[var(--accent-orange)]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+                    <span className="text-white text-xs font-sans font-semibold uppercase tracking-[0.2em] border-b border-white/80 pb-1">
+                      View Projects
+                    </span>
+                  </div>
+
+                  {/* Bottom Title */}
+                  <div className="absolute inset-x-0 bottom-0 z-10 p-5 pointer-events-none">
+                    <h3 className="text-base sm:text-lg font-semibold text-white leading-snug font-head line-clamp-2 drop-shadow-sm">
+                      {area.title}
+                    </h3>
+                  </div>
+                </OptimizedTiltCard>
+              </motion.div>
+            )
+          })}
         </div>
       </section>
 
