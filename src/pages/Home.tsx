@@ -93,6 +93,7 @@ function CoreResearchSlider({ onSelectArea }: CoreResearchSliderProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
   const offsetRef = useRef(0)
+  const nudgeRemainingRef = useRef(0)
   const currentVelocityRef = useRef(45)
   const targetVelocityRef = useRef(45)
   const lastDirectionRef = useRef<1 | -1>(1)
@@ -114,6 +115,16 @@ function CoreResearchSlider({ onSelectArea }: CoreResearchSliderProps) {
             (targetVelocityRef.current - currentVelocityRef.current) * Math.min(1, dt * 8)
 
           offsetRef.current += currentVelocityRef.current * dt
+
+          // Smoothly ease any pending arrow-click nudge
+          if (Math.abs(nudgeRemainingRef.current) > 0.25) {
+            const step = nudgeRemainingRef.current * Math.min(1, dt * 10)
+            offsetRef.current += step
+            nudgeRemainingRef.current -= step
+          } else {
+            nudgeRemainingRef.current = 0
+          }
+
           if (offsetRef.current >= halfWidth) {
             offsetRef.current -= halfWidth
           } else if (offsetRef.current < 0) {
@@ -154,16 +165,7 @@ function CoreResearchSlider({ onSelectArea }: CoreResearchSliderProps) {
 
   const nudge = (direction: -1 | 1) => {
     lastDirectionRef.current = direction
-    const track = trackRef.current
-    if (!track) return
-    const halfWidth = track.scrollWidth / 2
-    if (halfWidth <= 0) return
-
-    let next = offsetRef.current + direction * 340
-    if (next >= halfWidth) next -= halfWidth
-    if (next < 0) next += halfWidth
-    offsetRef.current = next
-    track.style.transform = `translate3d(${-next}px, 0, 0)`
+    nudgeRemainingRef.current += direction * 340
   }
 
   return (
