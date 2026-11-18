@@ -22,8 +22,17 @@ const OBJECTIVES = [
 /** Geometric SVG: Neural Research-to-Deployment Flow */
 function ResearchFlowVisual() {
   return (
-    <OptimizedTiltCard className="w-full rounded-2xl bg-white/[0.04] border border-white/12 p-6 sm:p-8 flex items-center justify-center">
-      <svg viewBox="0 0 360 170" fill="none" aria-hidden="true" className="w-full max-w-[340px] h-auto">
+    <OptimizedTiltCard className="group relative w-full rounded-2xl bg-white/[0.04] border border-white/12 hover:border-[#C77DFF]/60 hover:bg-white/[0.07] hover:shadow-[0_0_36px_rgba(199,125,255,0.18)] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-radial from-[#C77DFF]/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+      />
+      <svg
+        viewBox="0 0 360 170"
+        fill="none"
+        aria-hidden="true"
+        className="relative z-10 w-full max-w-[340px] h-auto transition-transform duration-500 group-hover:scale-[1.04]"
+      >
         <defs>
           <linearGradient id="spineFlowGrad" x1="0" y1="0" x2="360" y2="0" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#E0AAFF" stopOpacity="0.3" />
@@ -49,13 +58,22 @@ function ResearchFlowVisual() {
           { cx: 254, cy: 108, r: 5 },
           { cx: 328, cy: 85, r: 9 },
         ].map((n, i) => (
-          <g key={i}>
-            <circle cx={n.cx} cy={n.cy} r={n.r + 9} fill="rgba(199,125,255,0.12)" />
+          <g key={i} className="transition-transform duration-300 origin-center">
+            <circle
+              cx={n.cx}
+              cy={n.cy}
+              r={n.r + 9}
+              fill="rgba(199,125,255,0.12)"
+              className="transition-opacity duration-300 group-hover:opacity-100 opacity-70"
+            />
             <circle cx={n.cx} cy={n.cy} r={n.r} fill="#10002B" stroke="#C77DFF" strokeWidth="2" />
             <circle cx={n.cx} cy={n.cy} r={n.r * 0.4} fill="#FFFFFF" />
           </g>
         ))}
       </svg>
+      <span className="relative z-10 mt-3 text-[11px] font-sans uppercase tracking-[0.2em] text-white/45 group-hover:text-[#E0AAFF] transition-colors duration-300">
+        Research → Deployment
+      </span>
     </OptimizedTiltCard>
   )
 }
@@ -63,8 +81,17 @@ function ResearchFlowVisual() {
 /** Geometric SVG: Orbital Vision */
 function VisionOrbitVisual() {
   return (
-    <OptimizedTiltCard className="w-full rounded-2xl bg-white text-[var(--ink-dark)] p-6 sm:p-8 flex items-center justify-center shadow-xl">
-      <svg viewBox="0 0 260 180" fill="none" aria-hidden="true" className="w-full max-w-[260px] h-auto">
+    <OptimizedTiltCard className="group relative w-full rounded-2xl bg-white text-[var(--ink-dark)] border border-white/80 hover:border-[#C77DFF] hover:shadow-[0_16px_44px_rgba(199,125,255,0.28)] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center shadow-xl overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-radial from-[#C77DFF]/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+      />
+      <svg
+        viewBox="0 0 260 180"
+        fill="none"
+        aria-hidden="true"
+        className="relative z-10 w-full max-w-[260px] h-auto transition-transform duration-500 group-hover:scale-[1.05]"
+      >
         <circle cx="130" cy="90" r="72" stroke="rgba(123,44,191,0.18)" strokeWidth="1.25" strokeDasharray="4 4" />
         <circle cx="130" cy="90" r="50" stroke="rgba(123,44,191,0.35)" strokeWidth="1.5" />
         <ellipse
@@ -92,6 +119,9 @@ function VisionOrbitVisual() {
         <circle cx="204" cy="60" r="4.5" fill="#7B2CBF" />
         <circle cx="58" cy="122" r="4" fill="#9D4EDD" />
       </svg>
+      <span className="relative z-10 mt-3 text-[11px] font-sans uppercase tracking-[0.2em] text-[var(--ink-dark)]/50 group-hover:text-[#7B2CBF] transition-colors duration-300 font-semibold">
+        Building AI Locally
+      </span>
     </OptimizedTiltCard>
   )
 }
@@ -99,8 +129,17 @@ function VisionOrbitVisual() {
 /** Geometric SVG: Mission Convergence */
 function MissionConvergenceVisual() {
   return (
-    <OptimizedTiltCard className="w-full rounded-2xl bg-white/[0.04] border border-white/12 p-6 sm:p-8 flex items-center justify-center">
-      <svg viewBox="0 0 280 160" fill="none" aria-hidden="true" className="w-full max-w-[280px] h-auto">
+    <OptimizedTiltCard className="group relative w-full rounded-2xl bg-white/[0.04] border border-white/12 hover:border-[#C77DFF]/60 hover:bg-white/[0.07] hover:shadow-[0_0_36px_rgba(199,125,255,0.18)] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-radial from-[#C77DFF]/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+      />
+      <svg
+        viewBox="0 0 280 160"
+        fill="none"
+        aria-hidden="true"
+        className="relative z-10 w-full max-w-[280px] h-auto transition-transform duration-500 group-hover:scale-[1.04]"
+      >
         {[28, 62, 98, 132].map((y, idx) => (
           <path
             key={idx}
@@ -116,6 +155,9 @@ function MissionConvergenceVisual() {
         <circle cx="236" cy="80" r="11" fill="#C77DFF" />
         <circle cx="236" cy="80" r="4" fill="#FFFFFF" />
       </svg>
+      <span className="relative z-10 mt-3 text-[11px] font-sans uppercase tracking-[0.2em] text-white/45 group-hover:text-[#E0AAFF] transition-colors duration-300">
+        Research → Impact
+      </span>
     </OptimizedTiltCard>
   )
 }
@@ -127,7 +169,7 @@ function SpineNode() {
       aria-hidden="true"
       className="hidden md:flex absolute left-1/2 top-10 -translate-x-1/2 z-20 items-center justify-center"
     >
-      <span className="w-3 h-3 rounded-full bg-white ring-4 ring-[var(--ink-dark)] shadow-[0_0_16px_rgba(199,125,255,0.9)]" />
+      <span className="w-3 h-3 rounded-full bg-white ring-4 ring-[var(--ink-dark)] shadow-[0_0_16px_rgba(199,125,255,0.9)] transition-all duration-300 group-hover/row:scale-125 group-hover/row:bg-[#C77DFF] group-hover/row:shadow-[0_0_24px_rgba(199,125,255,1)]" />
     </div>
   )
 }
@@ -187,16 +229,20 @@ export default function About() {
         </div>
 
         <div className="space-y-16 sm:space-y-24 pt-14 sm:pt-20">
-          {/* ── ROW 1: ABOUT (Left: Header + Diagram | Right: Content) ── */}
+          {/* ── ROW 1: ABOUT (Left: Diagram | Right: Header + Content) ── */}
           <motion.section
             initial={{ opacity: 0, y: 28 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center"
+            className="group/row relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center"
           >
             <SpineNode />
-            <div className="md:text-right md:pr-4 space-y-5">
+            <div className="md:pr-4 order-2 md:order-1">
+              <ResearchFlowVisual />
+            </div>
+
+            <div className="md:pl-4 space-y-4 text-left order-1 md:order-2">
               <TitleReveal
                 as="h2"
                 waitForPreloader
@@ -205,10 +251,6 @@ export default function About() {
               >
                 About
               </TitleReveal>
-              <ResearchFlowVisual />
-            </div>
-
-            <div className="md:pl-4 space-y-4 text-left">
               <BlurReveal
                 as="p"
                 waitForPreloader
@@ -228,20 +270,16 @@ export default function About() {
             </div>
           </motion.section>
 
-          {/* ── ROW 2: VISION (Left: Diagram | Right: Header + Content) ── */}
+          {/* ── ROW 2: VISION (Left: Header + Content | Right: Diagram) ── */}
           <motion.section
             initial={{ opacity: 0, y: 28 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center"
+            className="group/row relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center"
           >
             <SpineNode />
-            <div className="md:pr-4 order-2 md:order-1">
-              <VisionOrbitVisual />
-            </div>
-
-            <div className="md:pl-4 text-left space-y-4 order-1 md:order-2">
+            <div className="md:text-right md:pr-4 space-y-4">
               <TitleReveal
                 as="h2"
                 hoverColor="#C77DFF"
@@ -257,18 +295,26 @@ export default function About() {
                 To make Pakistan a builder of AI, not just a consumer of it, with solutions designed around our people, our languages, and our values.
               </BlurReveal>
             </div>
+
+            <div className="md:pl-4">
+              <VisionOrbitVisual />
+            </div>
           </motion.section>
 
-          {/* ── ROW 3: MISSION (Left: Header + Content | Right: Diagram) ── */}
+          {/* ── ROW 3: MISSION (Left: Diagram | Right: Header + Content) ── */}
           <motion.section
             initial={{ opacity: 0, y: 28 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center"
+            className="group/row relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center"
           >
             <SpineNode />
-            <div className="md:text-right md:pr-4 space-y-4">
+            <div className="md:pr-4 order-2 md:order-1">
+              <MissionConvergenceVisual />
+            </div>
+
+            <div className="md:pl-4 text-left space-y-4 order-1 md:order-2">
               <TitleReveal
                 as="h2"
                 hoverColor="#C77DFF"
@@ -284,10 +330,6 @@ export default function About() {
                 To conduct cutting-edge AI research and turn it into secure, production-ready systems built around the languages, data, and needs of the people of Pakistan, while training the next generation of AI researchers and engineers.
               </BlurReveal>
             </div>
-
-            <div className="md:pl-4">
-              <MissionConvergenceVisual />
-            </div>
           </motion.section>
 
           {/* ── ROW 4: AIMS (Left: Header | Right: Interactive Cards) ── */}
@@ -296,7 +338,7 @@ export default function About() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start"
+            className="group/row relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start"
           >
             <SpineNode />
             <div className="md:text-right md:pr-4 md:pt-4">
@@ -324,14 +366,14 @@ export default function About() {
                         setSelectedAim(idx)
                       }
                     }}
-                    className={`w-full text-left p-5 sm:p-6 rounded-2xl border transition-colors cursor-pointer flex items-start gap-3.5 ${
+                    className={`group w-full text-left p-5 sm:p-6 rounded-2xl border transition-all duration-300 cursor-pointer flex items-start gap-3.5 ${
                       isSelected
                         ? 'bg-white text-[var(--ink-dark)] border-white shadow-xl'
-                        : 'bg-white/[0.04] text-white/85 border-white/12 hover:bg-white/[0.08] hover:border-[#C77DFF]/50'
+                        : 'bg-white/[0.04] text-white/85 border-white/12 hover:bg-white/[0.09] hover:border-[#C77DFF]/60 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(199,125,255,0.16)]'
                     }`}
                   >
                     <span
-                      className={`w-2 h-2 rounded-full mt-2 shrink-0 ${
+                      className={`w-2 h-2 rounded-full mt-2 shrink-0 transition-transform duration-300 group-hover:scale-125 ${
                         isSelected ? 'bg-[var(--accent-orange)]' : 'bg-[#C77DFF]'
                       }`}
                     />
@@ -339,7 +381,7 @@ export default function About() {
                       as="span"
                       delay={idx * 0.06}
                       className={`text-[15px] sm:text-[16px] leading-relaxed font-normal ${
-                        isSelected ? 'text-[var(--ink-dark)] font-medium' : 'text-white/85'
+                        isSelected ? 'text-[var(--ink-dark)] font-medium' : 'text-white/85 group-hover:text-white'
                       }`}
                     >
                       {aim}
@@ -356,7 +398,7 @@ export default function About() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start"
+            className="group/row relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start"
           >
             <SpineNode />
             <div className="md:pr-4 space-y-3.5 text-left order-2 md:order-1">
@@ -374,14 +416,14 @@ export default function About() {
                         setSelectedObjective(idx)
                       }
                     }}
-                    className={`w-full text-left p-5 rounded-2xl border transition-colors cursor-pointer flex items-start gap-3.5 ${
+                    className={`group w-full text-left p-5 rounded-2xl border transition-all duration-300 cursor-pointer flex items-start gap-3.5 ${
                       isSelected
                         ? 'bg-white text-[var(--ink-dark)] border-white shadow-xl'
-                        : 'bg-white/[0.04] text-white/85 border-white/12 hover:bg-white/[0.08] hover:border-[#C77DFF]/50'
+                        : 'bg-white/[0.04] text-white/85 border-white/12 hover:bg-white/[0.09] hover:border-[#C77DFF]/60 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(199,125,255,0.16)]'
                     }`}
                   >
                     <span
-                      className={`w-2 h-2 rounded-full mt-2 shrink-0 ${
+                      className={`w-2 h-2 rounded-full mt-2 shrink-0 transition-transform duration-300 group-hover:scale-125 ${
                         isSelected ? 'bg-[var(--accent-orange)]' : 'bg-[#C77DFF]'
                       }`}
                     />
@@ -389,7 +431,7 @@ export default function About() {
                       as="span"
                       delay={idx * 0.05}
                       className={`text-[14.5px] sm:text-[15.5px] leading-relaxed font-normal ${
-                        isSelected ? 'text-[var(--ink-dark)] font-medium' : 'text-white/85'
+                        isSelected ? 'text-[var(--ink-dark)] font-medium' : 'text-white/85 group-hover:text-white'
                       }`}
                     >
                       {obj}
