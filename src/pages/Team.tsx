@@ -32,34 +32,32 @@ function MemberPortraitCard({ member, isHighlighted }: MemberPortraitCardProps) 
 
   const cardContent = (
     <>
-      <div className="pt-5 px-5 pb-3 flex justify-center bg-[var(--bg-page)]/50 shrink-0">
-        <div className="relative w-36 h-40 sm:w-40 sm:h-44 rounded-2xl overflow-hidden bg-[var(--bg-page)] border border-[var(--border-hairline)] shadow-xs">
-          <img
-            src={getMemberAvatar(member.image)}
-            onError={(e) => {
-              e.currentTarget.src = DEFAULT_AVATAR
-            }}
-            alt={member.name}
-            className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
-            loading="lazy"
-          />
+      <div className="relative w-full aspect-[10/11] overflow-hidden bg-[var(--bg-page)] shrink-0">
+        <img
+          src={getMemberAvatar(member.image)}
+          onError={(e) => {
+            e.currentTarget.src = DEFAULT_AVATAR
+          }}
+          alt={member.name}
+          className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
+          loading="lazy"
+        />
 
-          {targetUrl && (
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-3">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 text-[var(--ink-dark)] text-xs font-sans font-semibold shadow-md translate-y-2 group-hover:translate-y-0 transition-transform duration-300 whitespace-nowrap">
-                {linkedInUrl ? (
-                  <>
-                    <Linkedin className="w-3.5 h-3.5 text-[#0A66C2]" />
-                    <span>Visit LinkedIn</span>
-                  </>
-                ) : (
-                  <span>View Details</span>
-                )}
-                <ArrowUpRight className="w-3.5 h-3.5" />
-              </span>
-            </div>
-          )}
-        </div>
+        {targetUrl && (
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 text-[var(--ink-dark)] text-xs font-sans font-semibold shadow-md translate-y-2 group-hover:translate-y-0 transition-transform duration-300 whitespace-nowrap">
+              {linkedInUrl ? (
+                <>
+                  <Linkedin className="w-3.5 h-3.5 text-[#0A66C2]" />
+                  <span>Visit LinkedIn</span>
+                </>
+              ) : (
+                <span>View Details</span>
+              )}
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="px-4 py-3.5 flex-1 flex items-center justify-between gap-2.5 bg-[var(--bg-surface)]">
@@ -76,7 +74,7 @@ function MemberPortraitCard({ member, isHighlighted }: MemberPortraitCardProps) 
   return (
     <OptimizedTiltCard
       id={`member-${member.id}`}
-      className={`rounded-2xl overflow-hidden flex flex-col h-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-all duration-200 ${isHighlighted ? 'ring-2 ring-[var(--accent-orange)] shadow-xl' : ''
+      className={`group rounded-2xl overflow-hidden flex flex-col h-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-all duration-200 ${isHighlighted ? 'ring-2 ring-[var(--accent-orange)] shadow-xl' : ''
         }`}
     >
       {targetUrl ? (
