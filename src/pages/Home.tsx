@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -10,7 +10,8 @@ import {
   ShieldAlert,
   ShieldCheck,
   Terminal,
-  LayoutGrid,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import Button from '../components/ui/Button'
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
@@ -83,6 +84,179 @@ const coreResearchAreas = [
     desc: 'Ensuring robust, unbiased, and safe deployment of intelligent systems in critical healthcare, power grids, and national infrastructure.',
   },
 ]
+
+interface CoreResearchSliderProps {
+  onSelectArea: (title: string) => void
+}
+
+function CoreResearchSlider({ onSelectArea }: CoreResearchSliderProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const offsetRef = useRef(0)
+  const currentVelocityRef = useRef(45)
+  const targetVelocityRef = useRef(45)
+  const lastDirectionRef = useRef<1 | -1>(1)
+
+  useEffect(() => {
+    let rafId: number
+    let lastTime = performance.now()
+
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - lastTime) / 1000)
+      lastTime = now
+
+      const track = trackRef.current
+      if (track) {
+        const halfWidth = track.scrollWidth / 2
+        if (halfWidth > 0) {
+          // Ease velocity smoothly toward target
+          currentVelocityRef.current +=
+            (targetVelocityRef.current - currentVelocityRef.current) * Math.min(1, dt * 8)
+
+          offsetRef.current += currentVelocityRef.current * dt
+          if (offsetRef.current >= halfWidth) {
+            offsetRef.current -= halfWidth
+          } else if (offsetRef.current < 0) {
+            offsetRef.current += halfWidth
+          }
+
+          track.style.transform = `translate3d(${-offsetRef.current}px, 0, 0)`
+        }
+      }
+
+      rafId = requestAnimationFrame(tick)
+    }
+
+    rafId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafId)
+  }, [])
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = containerRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const ratio = (e.clientX - rect.left) / rect.width
+
+    if (ratio < 0.28) {
+      lastDirectionRef.current = -1
+      targetVelocityRef.current = -220
+    } else if (ratio > 0.72) {
+      lastDirectionRef.current = 1
+      targetVelocityRef.current = 220
+    } else {
+      targetVelocityRef.current = 45 * lastDirectionRef.current
+    }
+  }
+
+  const handleMouseLeave = () => {
+    targetVelocityRef.current = 45 * lastDirectionRef.current
+  }
+
+  const nudge = (direction: -1 | 1) => {
+    lastDirectionRef.current = direction
+    const track = trackRef.current
+    if (!track) return
+    const halfWidth = track.scrollWidth / 2
+    if (halfWidth <= 0) return
+
+    let next = offsetRef.current + direction * 340
+    if (next >= halfWidth) next -= halfWidth
+    if (next < 0) next += halfWidth
+    offsetRef.current = next
+    track.style.transform = `translate3d(${-next}px, 0, 0)`
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="relative py-2 group/slider"
+    >
+      {/* Left Arrow */}
+      <button
+        type="button"
+        onClick={() => nudge(-1)}
+        onMouseEnter={() => {
+          lastDirectionRef.current = -1
+          targetVelocityRef.current = -220
+        }}
+        aria-label="Scroll research areas left"
+        className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-[var(--ink-dark)] border border-[var(--border-hairline)] shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer"
+      >
+        <ChevronLeft className="w-5 h-5" />
+      </button>
+
+      {/* Right Arrow */}
+      <button
+        type="button"
+        onClick={() => nudge(1)}
+        onMouseEnter={() => {
+          lastDirectionRef.current = 1
+          targetVelocityRef.current = 220
+        }}
+        aria-label="Scroll research areas right"
+        className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 hover:bg-white text-[var(--ink-dark)] border border-[var(--border-hairline)] shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer"
+      >
+        <ChevronRight className="w-5 h-5" />
+      </button>
+
+      <div className="overflow-hidden">
+        <div ref={trackRef} className="flex w-max will-change-transform">
+          {[...coreResearchAreas, ...coreResearchAreas].map((area, idx) => (
+            <div
+              key={`${area.title}-${idx}`}
+              className="w-[260px] sm:w-[300px] lg:w-[330px] mx-3 shrink-0 text-left"
+            >
+              <OptimizedTiltCard
+                role="button"
+                tabIndex={0}
+                onClick={() => onSelectArea(area.title)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onSelectArea(area.title)
+                  }
+                }}
+                aria-label={`View projects in ${area.title}`}
+                className="group relative aspect-square w-full rounded-none overflow-hidden border border-[var(--border-hairline)] bg-[var(--bg-surface)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] hover:border-[var(--accent-orange)]/60 transition-all duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-orange)]"
+              >
+                {/* Full-bleed Cover Image */}
+                <img
+                  src={area.image}
+                  onError={(e) => {
+                    e.currentTarget.src = '/placeholder-project.svg'
+                  }}
+                  alt={area.title}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                  decoding="async"
+                />
+
+                {/* Always-on bottom gradient for title readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10 pointer-events-none" />
+
+                {/* Hover Color Overlay + Centered Cue */}
+                <div className="absolute inset-0 bg-[var(--accent-orange)]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+                  <span className="text-white text-xs font-sans font-semibold uppercase tracking-[0.2em] border-b border-white/80 pb-1">
+                    View Projects
+                  </span>
+                </div>
+
+                {/* Bottom Title */}
+                <div className="absolute inset-x-0 bottom-0 z-10 p-5 pointer-events-none">
+                  <h3 className="text-base sm:text-lg font-semibold text-white leading-snug font-head line-clamp-2 drop-shadow-sm">
+                    {area.title}
+                  </h3>
+                </div>
+              </OptimizedTiltCard>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function Home() {
   const navigate = useNavigate()
@@ -330,13 +504,6 @@ export default function Home() {
           </TitleReveal>
 
           <div className="flex items-center gap-3 shrink-0">
-            <div className="inline-flex items-center p-1 rounded-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] shadow-2xs">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white bg-[var(--accent-orange)] shadow-xs select-none">
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>All Areas</span>
-              </span>
-            </div>
-
             <Button
               to="/projects"
               size="sm"
@@ -348,69 +515,11 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="relative overflow-hidden py-2">
-          <style>{`
-            @keyframes research-marquee {
-              0% { transform: translateX(0); }
-              100% { transform: translateX(-50%); }
-            }
-          `}</style>
-          <div
-            className="flex w-max hover:[animation-play-state:paused]"
-            style={{ animation: 'research-marquee 32s linear infinite' }}
-          >
-            {[...coreResearchAreas, ...coreResearchAreas].map((area, idx) => {
-              const goToArea = () =>
-                navigate(`/projects?area=${encodeURIComponent(area.title)}`)
-              return (
-                <div key={`${area.title}-${idx}`} className="w-[260px] sm:w-[300px] lg:w-[330px] mx-3 shrink-0 text-left">
-                  <OptimizedTiltCard
-                    role="button"
-                    tabIndex={0}
-                    onClick={goToArea}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        goToArea()
-                      }
-                    }}
-                    aria-label={`View projects in ${area.title}`}
-                    className="group relative aspect-square w-full rounded-none overflow-hidden border border-[var(--border-hairline)] bg-[var(--bg-surface)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] hover:border-[var(--accent-orange)]/60 transition-all duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-orange)]"
-                  >
-                    {/* Full-bleed Cover Image */}
-                    <img
-                      src={area.image}
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder-project.svg'
-                      }}
-                      alt={area.title}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                      decoding="async"
-                    />
-
-                    {/* Always-on bottom gradient for title readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10 pointer-events-none" />
-
-                    {/* Hover Color Overlay + Centered Cue */}
-                    <div className="absolute inset-0 bg-[var(--accent-orange)]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
-                      <span className="text-white text-xs font-sans font-semibold uppercase tracking-[0.2em] border-b border-white/80 pb-1">
-                        View Projects
-                      </span>
-                    </div>
-
-                    {/* Bottom Title */}
-                    <div className="absolute inset-x-0 bottom-0 z-10 p-5 pointer-events-none">
-                      <h3 className="text-base sm:text-lg font-semibold text-white leading-snug font-head line-clamp-2 drop-shadow-sm">
-                        {area.title}
-                      </h3>
-                    </div>
-                  </OptimizedTiltCard>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        <CoreResearchSlider
+          onSelectArea={(title) =>
+            navigate(`/projects?area=${encodeURIComponent(title)}`)
+          }
+        />
       </section>
 
       {/* ── 5. TEAM SHOWCASE (Guided by faculty, driven by students, built for Pakistan) ── */}
