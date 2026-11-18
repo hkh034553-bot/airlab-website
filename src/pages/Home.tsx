@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import Marquee from 'react-fast-marquee'
 import {
   Brain,
   Code,
@@ -349,13 +348,22 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="relative -mx-2 sm:mx-0">
-          <Marquee pauseOnHover speed={40} gradient={false} className="py-2">
-            {coreResearchAreas.map((area) => {
+        <div className="relative overflow-hidden py-2">
+          <style>{`
+            @keyframes research-marquee {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+          `}</style>
+          <div
+            className="flex w-max hover:[animation-play-state:paused]"
+            style={{ animation: 'research-marquee 32s linear infinite' }}
+          >
+            {[...coreResearchAreas, ...coreResearchAreas].map((area, idx) => {
               const goToArea = () =>
                 navigate(`/projects?area=${encodeURIComponent(area.title)}`)
               return (
-                <div key={area.title} className="w-[260px] sm:w-[300px] lg:w-[330px] mx-3 shrink-0 text-left">
+                <div key={`${area.title}-${idx}`} className="w-[260px] sm:w-[300px] lg:w-[330px] mx-3 shrink-0 text-left">
                   <OptimizedTiltCard
                     role="button"
                     tabIndex={0}
@@ -401,7 +409,7 @@ export default function Home() {
                 </div>
               )
             })}
-          </Marquee>
+          </div>
         </div>
       </section>
 
