@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useMotionValue } from 'framer-motion'
 import { Mail, Search, Loader2, X, ArrowUpRight } from 'lucide-react'
 import type { TeamMemberData } from '../types/data'
 import { getMemberAvatar, DEFAULT_AVATAR } from '../lib/placeholders'
@@ -9,6 +9,7 @@ import { TeamMemberEntity } from '../entities/TeamMemberEntity'
 import TitleReveal from '../components/ui/TitleReveal'
 import StudentApplicationModal from '../components/StudentApplicationModal'
 import OptimizedTiltCard from '@/components/ui/optimized-tilt-card'
+import { HoverDetailTooltip } from '@/components/ui/animated-tooltip'
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
 
 const Linkedin = ({ className = 'w-3.5 h-3.5' }: { className?: string }) => (
@@ -23,14 +24,34 @@ interface MemberPortraitCardProps {
   member: TeamMemberEntity
   isHighlighted: boolean
   showDesignation?: boolean
+  showTooltip?: boolean
 }
 
-function MemberPortraitCard({ member, isHighlighted, showDesignation = true }: MemberPortraitCardProps) {
+function MemberPortraitCard({
+  member,
+  isHighlighted,
+  showDesignation = true,
+  showTooltip = false,
+}: MemberPortraitCardProps) {
+  const [isHovered, setIsHovered] = useState(false)
+  const mouseX = useMotionValue(0)
   const linkedInUrl = member.getLinkedInUrl()
   const fallbackUrl = member.getPrimaryActionUrl()
   const targetUrl = linkedInUrl || (fallbackUrl !== '#' ? fallbackUrl : null)
   const isExternal = Boolean(linkedInUrl || (targetUrl && targetUrl.startsWith('http')))
   const designation = showDesignation ? (member.designation || member.role) : null
+
+  const tooltipTitle = member.researchFocus || member.department
+  const tooltipPeriod = member.term || member.tenure
+  const tooltipSubtitle = member.researchFocus
+    ? [member.department, tooltipPeriod].filter(Boolean).join(' • ')
+    : tooltipPeriod
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!showTooltip) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    mouseX.set(e.clientX - rect.left - rect.width / 2)
+  }
 
   const cardContent = (
     <>
@@ -80,7 +101,7 @@ function MemberPortraitCard({ member, isHighlighted, showDesignation = true }: M
     </>
   )
 
-  return (
+  const cardElement = (
     <OptimizedTiltCard
       id={`member-${member.id}`}
       className={`group rounded-2xl overflow-hidden flex flex-col h-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-all duration-200 ${isHighlighted ? 'ring-2 ring-[var(--accent-orange)] shadow-xl' : ''
@@ -100,6 +121,30 @@ function MemberPortraitCard({ member, isHighlighted, showDesignation = true }: M
         <div className="flex flex-col h-full">{cardContent}</div>
       )}
     </OptimizedTiltCard>
+  )
+
+  if (!showTooltip) {
+    return cardElement
+  }
+
+  return (
+    <div
+      className="relative h-full"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => {
+        setIsHovered(false)
+        mouseX.set(0)
+      }}
+      onMouseMove={handleMouseMove}
+    >
+      <HoverDetailTooltip
+        visible={isHovered}
+        mouseX={mouseX}
+        title={tooltipTitle}
+        subtitle={tooltipSubtitle}
+      />
+      {cardElement}
+    </div>
   )
 }
 
@@ -363,6 +408,7 @@ export default function Team() {
                   member={intern}
                   isHighlighted={highlightedMemberId === intern.id}
                   showDesignation={false}
+                  showTooltip
                 />
               ))}
             </div>
