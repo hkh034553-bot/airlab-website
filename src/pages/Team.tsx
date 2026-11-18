@@ -22,14 +22,15 @@ type TabType = 'faculty' | 'interns' | 'previous'
 interface MemberPortraitCardProps {
   member: TeamMemberEntity
   isHighlighted: boolean
+  showDesignation?: boolean
 }
 
-function MemberPortraitCard({ member, isHighlighted }: MemberPortraitCardProps) {
+function MemberPortraitCard({ member, isHighlighted, showDesignation = true }: MemberPortraitCardProps) {
   const linkedInUrl = member.getLinkedInUrl()
   const fallbackUrl = member.getPrimaryActionUrl()
   const targetUrl = linkedInUrl || (fallbackUrl !== '#' ? fallbackUrl : null)
   const isExternal = Boolean(linkedInUrl || (targetUrl && targetUrl.startsWith('http')))
-  const designation = member.designation || member.role
+  const designation = showDesignation ? (member.designation || member.role) : null
 
   const cardContent = (
     <>
@@ -361,6 +362,7 @@ export default function Team() {
                   key={intern.id}
                   member={intern}
                   isHighlighted={highlightedMemberId === intern.id}
+                  showDesignation={false}
                 />
               ))}
             </div>
