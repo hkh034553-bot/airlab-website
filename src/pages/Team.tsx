@@ -29,6 +29,7 @@ function MemberPortraitCard({ member, isHighlighted }: MemberPortraitCardProps) 
   const fallbackUrl = member.getPrimaryActionUrl()
   const targetUrl = linkedInUrl || (fallbackUrl !== '#' ? fallbackUrl : null)
   const isExternal = Boolean(linkedInUrl || (targetUrl && targetUrl.startsWith('http')))
+  const designation = member.designation || member.role
 
   const cardContent = (
     <>
@@ -44,11 +45,11 @@ function MemberPortraitCard({ member, isHighlighted }: MemberPortraitCardProps) 
         />
 
         {targetUrl && (
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 text-[var(--ink-dark)] text-xs font-sans font-semibold shadow-md translate-y-2 group-hover:translate-y-0 transition-transform duration-300 whitespace-nowrap">
+          <div className="pointer-events-none absolute inset-0 bg-[var(--accent-orange)]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <span className="inline-flex items-center gap-1.5 text-white text-xs font-sans font-semibold uppercase tracking-[0.2em] border-b border-white/80 pb-1">
               {linkedInUrl ? (
                 <>
-                  <Linkedin className="w-3.5 h-3.5 text-[#0A66C2]" />
+                  <Linkedin className="w-3.5 h-3.5" />
                   <span>Visit LinkedIn</span>
                 </>
               ) : (
@@ -61,9 +62,16 @@ function MemberPortraitCard({ member, isHighlighted }: MemberPortraitCardProps) 
       </div>
 
       <div className="px-4 py-3.5 flex-1 flex items-center justify-between gap-2.5 bg-[var(--bg-surface)]">
-        <h3 className="text-sm sm:text-[15px] font-semibold font-head text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors leading-snug line-clamp-2">
-          {member.name}
-        </h3>
+        <div className="min-w-0">
+          <h3 className="text-sm sm:text-[15px] font-semibold font-head text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors leading-snug line-clamp-2">
+            {member.name}
+          </h3>
+          {designation && (
+            <p className="text-xs font-sans text-[var(--text-muted)] mt-0.5 line-clamp-1">
+              {designation}
+            </p>
+          )}
+        </div>
         {linkedInUrl && (
           <Linkedin className="w-4 h-4 shrink-0 text-[var(--text-muted)] group-hover:text-[#0A66C2] transition-colors" />
         )}
