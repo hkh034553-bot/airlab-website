@@ -22,7 +22,7 @@ const OBJECTIVES = [
 /** Geometric SVG: Neural Research-to-Deployment Flow */
 function ResearchFlowVisual() {
   return (
-    <OptimizedTiltCard className="group relative w-full rounded-2xl bg-white/[0.04] border border-white/12 hover:border-[#C77DFF]/60 hover:bg-white/[0.07] hover:shadow-[0_0_36px_rgba(199,125,255,0.18)] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center overflow-hidden">
+    <OptimizedTiltCard className="group relative w-full rounded-none bg-white/[0.04] border border-white/12 hover:border-[#C77DFF]/60 hover:bg-white/[0.07] hover:shadow-[0_0_36px_rgba(199,125,255,0.18)] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center overflow-hidden">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-radial from-[#C77DFF]/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
@@ -81,7 +81,7 @@ function ResearchFlowVisual() {
 /** Geometric SVG: Orbital Vision */
 function VisionOrbitVisual() {
   return (
-    <OptimizedTiltCard className="group relative w-full rounded-2xl bg-white text-[var(--ink-dark)] border border-white/80 hover:border-[#C77DFF] hover:shadow-[0_16px_44px_rgba(199,125,255,0.28)] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center shadow-xl overflow-hidden">
+    <OptimizedTiltCard className="group relative w-full rounded-none bg-white text-[var(--ink-dark)] border border-white/80 hover:border-[#C77DFF] hover:shadow-[0_16px_44px_rgba(199,125,255,0.28)] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center shadow-xl overflow-hidden">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-radial from-[#C77DFF]/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
@@ -129,7 +129,7 @@ function VisionOrbitVisual() {
 /** Geometric SVG: Mission Convergence */
 function MissionConvergenceVisual() {
   return (
-    <OptimizedTiltCard className="group relative w-full rounded-2xl bg-white/[0.04] border border-white/12 hover:border-[#C77DFF]/60 hover:bg-white/[0.07] hover:shadow-[0_0_36px_rgba(199,125,255,0.18)] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center overflow-hidden">
+    <OptimizedTiltCard className="group relative w-full rounded-none bg-white/[0.04] border border-white/12 hover:border-[#C77DFF]/60 hover:bg-white/[0.07] hover:shadow-[0_0_36px_rgba(199,125,255,0.18)] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center overflow-hidden">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-radial from-[#C77DFF]/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
@@ -366,7 +366,7 @@ export default function About() {
                         setSelectedAim(idx)
                       }
                     }}
-                    className={`group w-full text-left p-5 sm:p-6 rounded-2xl border transition-all duration-300 cursor-pointer flex items-start gap-3.5 ${
+                    className={`group w-full text-left p-5 sm:p-6 rounded-none border transition-all duration-300 cursor-pointer flex items-start gap-3.5 ${
                       isSelected
                         ? 'bg-white text-[var(--ink-dark)] border-white shadow-xl'
                         : 'bg-white/[0.04] text-white/85 border-white/12 hover:bg-white/[0.09] hover:border-[#C77DFF]/60 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(199,125,255,0.16)]'
@@ -416,7 +416,7 @@ export default function About() {
                         setSelectedObjective(idx)
                       }
                     }}
-                    className={`group w-full text-left p-5 rounded-2xl border transition-all duration-300 cursor-pointer flex items-start gap-3.5 ${
+                    className={`group w-full text-left p-5 rounded-none border transition-all duration-300 cursor-pointer flex items-start gap-3.5 ${
                       isSelected
                         ? 'bg-white text-[var(--ink-dark)] border-white shadow-xl'
                         : 'bg-white/[0.04] text-white/85 border-white/12 hover:bg-white/[0.09] hover:border-[#C77DFF]/60 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(199,125,255,0.16)]'

@@ -123,7 +123,7 @@ export default function NeuralTerminal() {
       glareMaxOpacity={0.12}
       className="w-full max-w-5xl mx-auto"
     >
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]/90 backdrop-blur-2xl shadow-2xl shadow-black/60 overflow-hidden text-left font-sans">
+      <div className="rounded-none border border-[var(--border)] bg-[var(--bg-card)]/90 backdrop-blur-2xl shadow-2xl shadow-black/60 overflow-hidden text-left font-sans">
         {/* Top Mac Window Bar */}
         <div className="bg-[var(--bg-muted)]/80 px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -188,7 +188,7 @@ export default function NeuralTerminal() {
         {/* Telemetry Dashboard Grid */}
         <div className="p-5 grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Real-time Loss Curve Canvas */}
-          <div className="lg:col-span-2 rounded-xl bg-[var(--bg)]/90 border border-[var(--border)] p-4 flex flex-col justify-between">
+          <div className="lg:col-span-2 rounded-none bg-[var(--bg)]/90 border border-[var(--border)] p-4 flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold uppercase tracking-wider text-[var(--fg)] flex items-center gap-1.5">
                 <Activity className="w-3.5 h-3.5 text-[var(--primary)]" />
@@ -217,7 +217,7 @@ export default function NeuralTerminal() {
 
           {/* Quick Metrics & Hardware Spec */}
           <div className="flex flex-col gap-3 justify-between">
-            <div className="rounded-xl bg-[var(--bg)]/90 border border-[var(--border)] p-3.5 space-y-2.5">
+            <div className="rounded-none bg-[var(--bg)]/90 border border-[var(--border)] p-3.5 space-y-2.5">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-[var(--fg-sub)]">Hardware Cluster:</span>
                 <span className="font-bold text-[var(--fg)]">8x NVIDIA H100</span>
@@ -236,7 +236,7 @@ export default function NeuralTerminal() {
               </div>
             </div>
 
-            <div className="rounded-xl bg-[var(--bg-muted)]/70 border border-[var(--border)] p-3 text-[11px] text-[var(--fg-sub)] flex items-start gap-2">
+            <div className="rounded-none bg-[var(--bg-muted)]/70 border border-[var(--border)] p-3 text-[11px] text-[var(--fg-sub)] flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 text-[var(--accent-purple)] shrink-0 mt-0.5" />
               <span>Real-time telemetry stream synchronized with AIR Lab HEC supercomputing nodes.</span>
             </div>
@@ -245,7 +245,7 @@ export default function NeuralTerminal() {
 
         {/* Live Terminal Log Output */}
         <div className="px-5 pb-4">
-          <div className="rounded-lg bg-black/80 border border-white/10 p-3 text-[11px] leading-relaxed space-y-1 overflow-x-auto text-[var(--bg-surface)] shadow-inner">
+          <div className="rounded-none bg-black/80 border border-white/10 p-3 text-[11px] leading-relaxed space-y-1 overflow-x-auto text-[var(--bg-surface)] shadow-inner">
             {logs.map((log, i) => (
               <div key={i} className="flex items-center gap-2">
                 <span className="text-[var(--primary)] select-none">❯</span>

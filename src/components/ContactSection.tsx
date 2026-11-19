@@ -6,7 +6,7 @@ import OptimizedTiltCard from '@/components/ui/optimized-tilt-card'
 export const ContactSection: React.FC = () => {
   return (
     <div className="w-full">
-      <div className="p-8 sm:p-12 rounded-3xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] shadow-sm text-left relative overflow-hidden">
+      <div className="p-8 sm:p-12 rounded-none bg-[var(--bg-surface)] border border-[var(--border-hairline)] shadow-sm text-left relative overflow-hidden">
         <div className="max-w-3xl">
           <div className="flex items-center gap-2 mb-4">
             <span className="px-3 py-1 text-[11px] font-sans font-semibold bg-[var(--ink-dark)] text-white rounded-full uppercase tracking-wider">
@@ -25,7 +25,7 @@ export const ContactSection: React.FC = () => {
               onClick={() => {
                 window.location.href = 'mailto:contact@airlab.neduet.edu.pk'
               }}
-              className="p-5 rounded-2xl bg-[var(--bg-page)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/50 transition-colors flex items-start gap-4 cursor-pointer"
+              className="p-5 rounded-none bg-[var(--bg-page)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/50 transition-colors flex items-start gap-4 cursor-pointer"
             >
               <div className="w-10 h-10 rounded-xl bg-[var(--accent-orange-light)] text-[var(--accent-orange)] flex items-center justify-center shrink-0">
                 <Mail className="w-5 h-5" />
@@ -38,7 +38,7 @@ export const ContactSection: React.FC = () => {
               </div>
             </OptimizedTiltCard>
 
-            <OptimizedTiltCard className="p-5 rounded-2xl bg-[var(--bg-page)] border border-[var(--border-hairline)] flex items-start gap-4">
+            <OptimizedTiltCard className="p-5 rounded-none bg-[var(--bg-page)] border border-[var(--border-hairline)] flex items-start gap-4">
               <div className="w-10 h-10 rounded-xl bg-[var(--ink-dark)]/10 text-[var(--ink-dark)] flex items-center justify-center shrink-0">
                 <Phone className="w-5 h-5" />
               </div>
@@ -50,7 +50,7 @@ export const ContactSection: React.FC = () => {
               </div>
             </OptimizedTiltCard>
 
-            <OptimizedTiltCard className="sm:col-span-2 p-5 rounded-2xl bg-[var(--bg-page)] border border-[var(--border-hairline)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <OptimizedTiltCard className="sm:col-span-2 p-5 rounded-none bg-[var(--bg-page)] border border-[var(--border-hairline)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-xl bg-[var(--accent-orange-light)] text-[var(--accent-orange)] flex items-center justify-center shrink-0">
                   <MapPin className="w-5 h-5" />

@@ -414,7 +414,7 @@ export function CoverflowCarousel({
                 aria-roledescription="slide"
                 aria-label={`${(index % Math.max(baseCount, 1)) + 1} of ${baseCount}`}
                 className={cn(
-                  "absolute left-1/2 top-0 aspect-square overflow-hidden rounded-xl bg-muted shadow-lg will-change-transform",
+                  "absolute left-1/2 top-0 aspect-square overflow-hidden rounded-none bg-muted shadow-lg will-change-transform",
                   cardClassName,
                 )}
                 style={{ width: "var(--cf-card)" }}

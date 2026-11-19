@@ -357,7 +357,7 @@ export default function Projects() {
 
       {/* Active Core Research Area Banner (Only visible when directed from Home card's View Projects link) */}
       {activeArea && (
-        <div className="mb-8 p-3.5 sm:p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--accent-orange)]/40 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs font-sans">
+        <div className="mb-8 p-3.5 sm:p-4 rounded-none bg-[var(--bg-surface)] border border-[var(--accent-orange)]/40 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs font-sans">
           <div className="flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-[var(--accent-orange)] animate-pulse" />
             <span className="text-[var(--text-muted)]">Categorized by Core Research Area:</span>
@@ -462,11 +462,11 @@ export default function Projects() {
 
       {/* Loading / Empty State */}
       {loading && filtered.length === 0 ? (
-        <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)]">
+        <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-none bg-[var(--bg-surface)]">
           <p className="text-sm font-sans text-[var(--text-muted)]">Loading projects...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)]">
+        <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-none bg-[var(--bg-surface)]">
           <p className="text-sm font-sans text-[var(--text-muted)]">
             {query ? `No projects match "${query}".` : 'No projects published yet.'}
           </p>
@@ -488,7 +488,7 @@ export default function Projects() {
                   exit={{ opacity: 0, scale: 0.98, y: 10 }}
                   transition={{ duration: 0.2 }}
                   onClick={e => e.stopPropagation()}
-                  className="w-full max-w-3xl bg-[var(--bg-surface-elevated)] border border-[var(--border-hairline)] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-left relative my-auto font-sans"
+                  className="w-full max-w-3xl bg-[var(--bg-surface-elevated)] border border-[var(--border-hairline)] rounded-none shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-left relative my-auto font-sans"
                 >
                   <div className="px-6 py-4 bg-[var(--bg-surface)] border-b border-[var(--border-hairline)] flex items-center justify-between select-none">
                     <div className="flex items-center gap-2.5">
@@ -509,7 +509,7 @@ export default function Projects() {
                   <div className="p-6 sm:p-8 overflow-y-auto flex-1">
                     {/* Image Gallery Viewer */}
                     <div className="mb-6">
-                      <div className="relative h-64 sm:h-80 w-full rounded-2xl overflow-hidden bg-[var(--bg-page)] border border-[var(--border-hairline)] mb-3">
+                      <div className="relative h-64 sm:h-80 w-full rounded-none overflow-hidden bg-[var(--bg-page)] border border-[var(--border-hairline)] mb-3">
                         <AnimatePresence mode="wait">
                           <motion.img
                             key={activeGalleryIndex}
@@ -562,7 +562,7 @@ export default function Projects() {
                             <button
                               key={idx}
                               onClick={() => setActiveGalleryIndex(idx)}
-                              className={`w-20 h-14 rounded-xl overflow-hidden border shrink-0 transition-all cursor-pointer ${activeGalleryIndex === idx
+                              className={`w-20 h-14 rounded-none overflow-hidden border shrink-0 transition-all cursor-pointer ${activeGalleryIndex === idx
                                   ? 'border-[var(--accent-orange)] ring-2 ring-[var(--accent-orange)]'
                                   : 'border-[var(--border-hairline)] opacity-60 hover:opacity-100'
                                 }`}
@@ -584,14 +584,14 @@ export default function Projects() {
 
                     {/* Specs Table */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs font-sans mb-8">
-                      <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-2xl">
+                      <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
                         <span className="text-[var(--text-subtle)] block mb-1">PROJECT TIMELINE</span>
                         <span className="font-semibold text-[var(--text-primary)]">
                           {selectedProject.startDate || selectedProject.timeTaken}
                         </span>
                       </div>
                       {selectedProject.funding && (
-                        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-2xl">
+                        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
                           <span className="text-[var(--text-subtle)] block mb-1">GRANT & FUNDING SOURCE</span>
                           <Link to="/grants" onClick={() => setSelectedProject(null)} className="font-semibold text-[var(--accent-orange)] hover:underline">
                             {selectedProject.funding}
@@ -603,11 +603,11 @@ export default function Projects() {
                           )}
                         </div>
                       )}
-                      <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-2xl">
+                      <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
                         <span className="text-[var(--text-subtle)] block mb-1">STATUS</span>
                         <span className="font-semibold text-[var(--accent-orange)]">{selectedProject.status}</span>
                       </div>
-                      <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-2xl">
+                      <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
                         <span className="text-[var(--text-subtle)] block mb-1">PROJECT CATEGORY</span>
                         <span className="font-semibold text-[var(--text-primary)]">{selectedProject.category}</span>
                       </div>
@@ -623,7 +623,7 @@ export default function Projects() {
                           {selectedProject.teamMembers.map((member, idx) => (
                             <div
                               key={idx}
-                              className="px-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-xl flex items-center text-xs font-sans"
+                              className="px-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none flex items-center text-xs font-sans"
                             >
                               <span className="font-semibold text-[var(--text-primary)]">{member}</span>
                             </div>

@@ -53,7 +53,7 @@ export default function Interns() {
 
       {/* Grid of Alumni */}
       {interns.length === 0 ? (
-        <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)] mb-16">
+        <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-none bg-[var(--bg-surface)] mb-16">
           {loading ? (
             <div className="inline-flex items-center gap-2 text-sm font-sans text-[var(--text-muted)]">
               <Loader2 className="w-4 h-4 animate-spin text-[var(--accent-orange)]" />
@@ -68,13 +68,13 @@ export default function Interns() {
           {interns.map((intern, index) => (
             <SectionReveal key={intern.id} staggerIndex={index}>
               <OptimizedTiltCard
-                className="p-8 sm:p-10 flex flex-col justify-between h-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-3xl hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-colors"
+                className="p-8 sm:p-10 flex flex-col justify-between h-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-colors"
                 style={{ transitionDelay: `${index * 50}ms` }}
               >
                 <div>
                   {/* Profile Header */}
                   <div className="flex items-center gap-5 mb-6">
-                    <div className="relative w-20 h-20 rounded-2xl overflow-hidden shrink-0 border border-[var(--border-hairline)] bg-[var(--bg-page)] shadow-xs">
+                    <div className="relative w-20 h-20 rounded-none overflow-hidden shrink-0 border border-[var(--border-hairline)] bg-[var(--bg-page)] shadow-xs">
                       <img
                         src={getMemberAvatar(intern.image)}
                         alt={intern.name}
@@ -130,7 +130,7 @@ export default function Interns() {
 
                   {/* Published Work at AIR Lab */}
                   {intern.paper && (
-                    <div className="mb-6 p-4 rounded-2xl bg-[var(--bg-page)] border border-[var(--border-hairline)]">
+                    <div className="mb-6 p-4 rounded-none bg-[var(--bg-page)] border border-[var(--border-hairline)]">
                       <div className="text-xs font-sans font-semibold text-[var(--text-primary)] mb-1 flex items-center gap-1.5">
                         <BookOpen className="w-3.5 h-3.5 text-[var(--accent-orange)]" />
                         Key Publication:
@@ -161,7 +161,7 @@ export default function Interns() {
       )}
 
       {/* Call to Action Banner */}
-      <div className="p-8 sm:p-12 rounded-3xl bg-[var(--ink-dark)] text-white text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
+      <div className="p-8 sm:p-12 rounded-none bg-[var(--ink-dark)] text-white text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
         <div className="max-w-xl">
           <h3 className="text-2xl font-bold font-head mb-2 text-white">
             Are you a former AIR Lab research fellow?

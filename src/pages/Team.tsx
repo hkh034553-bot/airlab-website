@@ -355,7 +355,7 @@ export default function Team() {
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {facultyMembers.length === 0 && (
-                <div className="col-span-full text-center py-16 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)]">
+                <div className="col-span-full text-center py-16 border border-dashed border-[var(--border-hairline)] rounded-none bg-[var(--bg-surface)]">
                   {loading ? (
                     <div className="inline-flex items-center gap-2 text-sm font-sans text-[var(--text-muted)]">
                       <Loader2 className="w-4 h-4 animate-spin text-[var(--accent-orange)]" />
@@ -389,7 +389,7 @@ export default function Team() {
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredInterns.length === 0 && (
-                <div className="col-span-full text-center py-16 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)]">
+                <div className="col-span-full text-center py-16 border border-dashed border-[var(--border-hairline)] rounded-none bg-[var(--bg-surface)]">
                   {loading ? (
                     <div className="inline-flex items-center gap-2 text-sm font-sans text-[var(--text-muted)]">
                       <Loader2 className="w-4 h-4 animate-spin text-[var(--accent-orange)]" />
@@ -425,7 +425,7 @@ export default function Team() {
             transition={{ duration: 0.25 }}
             className="space-y-8 text-left"
           >
-            <div className="overflow-hidden bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-3xl shadow-sm">
+            <div className="overflow-hidden bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none shadow-sm">
               <div className="p-6 sm:p-8 border-b border-[var(--border-hairline)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-xl font-semibold font-head text-[var(--text-primary)]">

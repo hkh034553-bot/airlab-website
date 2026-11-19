@@ -265,11 +265,11 @@ export default function Gallery() {
           Array.from({ length: 6 }).map((_, idx) => (
             <div
               key={idx}
-              className="h-full rounded-3xl border border-[var(--border-hairline)] bg-[var(--bg-surface)] animate-pulse"
+              className="h-full rounded-none border border-[var(--border-hairline)] bg-[var(--bg-surface)] animate-pulse"
             />
           ))
         ) : filteredCards.length === 0 ? (
-          <div className="col-span-full text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)]">
+          <div className="col-span-full text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-none bg-[var(--bg-surface)]">
             <p className="text-sm font-sans text-[var(--text-muted)]">
               {allCards.length === 0
                 ? 'No gallery photos published yet.'
@@ -284,7 +284,7 @@ export default function Gallery() {
             >
               <OptimizedTiltCard
                 onClick={() => setSelectedIndex(i)}
-                className="h-full rounded-3xl border border-[var(--border-hairline)] bg-[var(--bg-surface)] cursor-pointer shadow-sm hover:border-[var(--accent-orange)]/50 hover:shadow-lg transition-colors duration-300"
+                className="h-full rounded-none border border-[var(--border-hairline)] bg-[var(--bg-surface)] cursor-pointer shadow-sm hover:border-[var(--accent-orange)]/50 hover:shadow-lg transition-colors duration-300"
                 style={{ transitionDelay: `${i * 30}ms` }}
               >
                 <img
@@ -340,7 +340,7 @@ export default function Gallery() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.2 }}
-                  className="relative max-w-4xl w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-hairline)] rounded-3xl overflow-hidden shadow-2xl z-10 text-left"
+                  className="relative max-w-4xl w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-hairline)] rounded-none overflow-hidden shadow-2xl z-10 text-left"
                 >
                   <button
                     type="button"

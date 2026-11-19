@@ -481,14 +481,14 @@ export default function Home() {
               transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
               className="lg:col-span-7"
             >
-              <OptimizedTiltCard className="rounded-3xl border border-white/15 shadow-2xl min-h-[340px] sm:min-h-[440px] lg:min-h-[500px] bg-white/5">
+              <OptimizedTiltCard className="rounded-none border border-white/15 shadow-2xl min-h-[340px] sm:min-h-[440px] lg:min-h-[500px] bg-white/5">
                 <img
                   src="/about-lab.jpg"
                   alt="AIR Lab NED University Team"
                   className="w-full h-full absolute inset-0 object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                   loading="lazy"
                 />
-                <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/15 rounded-3xl" />
+                <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/15 rounded-none" />
               </OptimizedTiltCard>
             </motion.div>
           </div>
@@ -565,14 +565,14 @@ export default function Home() {
               transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
               className="lg:col-span-7"
             >
-              <OptimizedTiltCard className="rounded-3xl border border-white/15 shadow-2xl min-h-[340px] sm:min-h-[440px] lg:min-h-[500px] bg-white/5">
+              <OptimizedTiltCard className="rounded-none border border-white/15 shadow-2xl min-h-[340px] sm:min-h-[440px] lg:min-h-[500px] bg-white/5">
                 <img
                   src="/team-group.jpg"
                   alt="AIR Lab Research Team"
                   className="w-full h-full absolute inset-0 object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                   loading="lazy"
                 />
-                <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/15 rounded-3xl" />
+                <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/15 rounded-none" />
               </OptimizedTiltCard>
             </motion.div>
           </div>

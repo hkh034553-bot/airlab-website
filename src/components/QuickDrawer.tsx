@@ -268,7 +268,7 @@ export default function QuickDrawer({
                   /* Projects View */
                   <div className="space-y-4">
                     {filteredProjects.length === 0 ? (
-                      <div className="py-12 text-center text-xs font-sans text-[var(--text-subtle)] bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-2xl">
+                      <div className="py-12 text-center text-xs font-sans text-[var(--text-subtle)] bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
                         No projects match "{searchQuery}"
                       </div>
                     ) : (
@@ -277,7 +277,7 @@ export default function QuickDrawer({
                           key={proj.id}
                           to="/projects"
                           onClick={onClose}
-                          className="block p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-md transition-all group cursor-pointer text-left"
+                          className="block p-5 rounded-none bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-md transition-all group cursor-pointer text-left"
                         >
                           <div className="flex items-start justify-between gap-3 mb-2.5">
                             <span className="px-3 py-0.5 rounded-full text-[10px] font-sans font-bold tracking-wider uppercase bg-[var(--accent-orange-light)] text-[var(--accent-orange)] border border-[var(--accent-orange)]/20">
@@ -310,7 +310,7 @@ export default function QuickDrawer({
                   /* Members View */
                   <div className="space-y-4">
                     {filteredMembers.length === 0 ? (
-                      <div className="py-12 text-center text-xs font-sans text-[var(--text-subtle)] bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-2xl">
+                      <div className="py-12 text-center text-xs font-sans text-[var(--text-subtle)] bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
                         No members match "{searchQuery}"
                       </div>
                     ) : (
@@ -319,10 +319,10 @@ export default function QuickDrawer({
                           key={member.id}
                           to="/team"
                           onClick={onClose}
-                          className="block p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--ink-dark)] hover:shadow-md transition-all flex items-start gap-4 group cursor-pointer text-left"
+                          className="block p-5 rounded-none bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--ink-dark)] hover:shadow-md transition-all flex items-start gap-4 group cursor-pointer text-left"
                         >
                           {/* Avatar / Photo */}
-                          <div className="w-13 h-13 rounded-2xl overflow-hidden bg-[var(--bg-page)] border border-[var(--border-hairline)] shrink-0 flex items-center justify-center font-head font-bold text-base text-[var(--text-primary)]">
+                          <div className="w-13 h-13 rounded-none overflow-hidden bg-[var(--bg-page)] border border-[var(--border-hairline)] shrink-0 flex items-center justify-center font-head font-bold text-base text-[var(--text-primary)]">
                             {member.image ? (
                               <img
                                 src={getMemberAvatar(member.image)}

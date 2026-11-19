@@ -113,7 +113,7 @@ export default function Publications() {
               return (
                 <OptimizedTiltCard
                   key={pub.id}
-                  className="p-8 sm:p-10 flex flex-col md:flex-row md:items-start justify-between gap-6 hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-colors duration-200 text-left bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-3xl"
+                  className="p-8 sm:p-10 flex flex-col md:flex-row md:items-start justify-between gap-6 hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-colors duration-200 text-left bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none"
                   style={{ transitionDelay: `${i * 20}ms` }}
                 >
                   <div className="space-y-3.5 flex-1">
@@ -236,7 +236,7 @@ export default function Publications() {
         </AnimatePresence>
 
         {filtered.length === 0 && (
-          <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)]">
+          <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-none bg-[var(--bg-surface)]">
             <p className="text-sm font-sans text-[var(--text-muted)]">
               {searchQuery ? 'No publications matched your search criteria.' : 'No publications published yet.'}
             </p>

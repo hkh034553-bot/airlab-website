@@ -197,7 +197,7 @@ export default function Blogs() {
           {[0, 1, 2].map(idx => (
             <div
               key={idx}
-              className="rounded-3xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] overflow-hidden animate-pulse flex flex-col justify-between"
+              className="rounded-none bg-[var(--bg-surface)] border border-[var(--border-hairline)] overflow-hidden animate-pulse flex flex-col justify-between"
             >
               <div>
                 <div className="w-full h-48 bg-[var(--bg-page)] border-b border-[var(--border-hairline)]" />
@@ -220,7 +220,7 @@ export default function Blogs() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-24 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)]">
+        <div className="text-center py-24 border border-dashed border-[var(--border-hairline)] rounded-none bg-[var(--bg-surface)]">
           <Sparkles className="w-8 h-8 text-[var(--accent-orange)] mx-auto mb-3 opacity-60" />
           <p className="text-sm sm:text-base font-sans font-medium text-[var(--text-primary)]">
             {searchQuery || selectedTag !== 'All'
@@ -254,7 +254,7 @@ export default function Blogs() {
               <OptimizedTiltCard
                 key={itemKey}
                 onClick={handleCardClick}
-                className="rounded-3xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-colors duration-200 flex flex-col justify-between cursor-pointer"
+                className="rounded-none bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-colors duration-200 flex flex-col justify-between cursor-pointer"
               >
                 <div>
                   {blog.image && (
@@ -347,7 +347,7 @@ export default function Blogs() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
               transition={{ duration: 0.2 }}
-              className="relative w-full max-w-2xl bg-[var(--bg-surface-elevated)] border border-[var(--border-hairline)] rounded-3xl p-6 sm:p-10 shadow-2xl z-10 max-h-[85vh] overflow-y-auto text-left"
+              className="relative w-full max-w-2xl bg-[var(--bg-surface-elevated)] border border-[var(--border-hairline)] rounded-none p-6 sm:p-10 shadow-2xl z-10 max-h-[85vh] overflow-y-auto text-left"
             >
               <button
                 onClick={() => setActivePost(null)}
@@ -371,7 +371,7 @@ export default function Blogs() {
               </div>
 
               {activePost.image && (
-                <div className="mb-6 rounded-2xl overflow-hidden border border-[var(--border-hairline)] max-h-64 bg-[var(--bg-page)]">
+                <div className="mb-6 rounded-none overflow-hidden border border-[var(--border-hairline)] max-h-64 bg-[var(--bg-page)]">
                   <img
                     src={activePost.image}
                     alt={activePost.title}

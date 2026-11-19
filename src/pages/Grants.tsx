@@ -178,7 +178,7 @@ export default function Grants() {
               return (
                 <OptimizedTiltCard
                   key={grant.id}
-                  className="p-9 sm:p-12 lg:p-14 min-h-[380px] sm:min-h-[420px] rounded-3xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-colors duration-200 flex flex-col justify-between"
+                  className="p-9 sm:p-12 lg:p-14 min-h-[380px] sm:min-h-[420px] rounded-none bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-colors duration-200 flex flex-col justify-between"
                 >
                   {/* Visible background image with directional gradient overlay for text contrast */}
                   {grant.image && (
@@ -238,7 +238,7 @@ export default function Grants() {
                         </div>
 
                         {grant.amount && (
-                          <div className="px-5 py-3.5 rounded-2xl bg-[var(--bg-page)]/95 backdrop-blur-xs border border-[var(--border-hairline)] text-left md:text-right shrink-0 shadow-xs">
+                          <div className="px-5 py-3.5 rounded-none bg-[var(--bg-page)]/95 backdrop-blur-xs border border-[var(--border-hairline)] text-left md:text-right shrink-0 shadow-xs">
                             <div className="text-[11px] font-sans font-bold tracking-wider text-[var(--text-subtle)] uppercase">
                               Granted Amount
                             </div>
@@ -286,7 +286,7 @@ export default function Grants() {
         </div>
 
         {sortedGrants.length === 0 && (
-          <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)] mt-8">
+          <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-none bg-[var(--bg-surface)] mt-8">
             <p className="text-sm font-sans text-[var(--text-muted)]">No research grants published yet.</p>
           </div>
         )}

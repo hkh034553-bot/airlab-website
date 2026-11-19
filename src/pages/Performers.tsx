@@ -157,14 +157,14 @@ export default function Performers() {
 
       {/* ── Performer Card or Placeholder ── */}
       {loading ? (
-        <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)] max-w-4xl mx-auto">
+        <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-none bg-[var(--bg-surface)] max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 text-sm font-sans text-[var(--text-muted)]">
             <Loader2 className="w-4 h-4 animate-spin text-[var(--accent-orange)]" />
             <span>Loading Performers of the Month...</span>
           </div>
         </div>
       ) : !featuredPerformer ? (
-        <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-3xl bg-[var(--bg-surface)] max-w-4xl mx-auto">
+        <div className="text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-none bg-[var(--bg-surface)] max-w-4xl mx-auto">
           <Medal className="w-12 h-12 text-[var(--accent-orange)] mx-auto mb-4 opacity-75" />
           <h3 className="text-xl font-bold font-head text-[var(--text-primary)] mb-2">
             Nomination Cycle in Progress
@@ -175,7 +175,7 @@ export default function Performers() {
         </div>
       ) : (
         <SectionReveal delay={0.15} blur={false}>
-          <OptimizedTiltCard className="p-5 sm:p-7 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-3xl shadow-lg max-w-5xl mx-auto transition-colors duration-300 hover:border-[var(--accent-orange)]/40 text-left">
+          <OptimizedTiltCard className="p-5 sm:p-7 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none shadow-lg max-w-5xl mx-auto transition-colors duration-300 hover:border-[var(--accent-orange)]/40 text-left">
             {/* Month Selector (Most recent first: October to July) */}
             <div className="flex flex-wrap items-center justify-center gap-2 pb-4 border-b border-[var(--border-hairline)] mb-5">
               {performersList.map((p, idx) => {
@@ -220,7 +220,7 @@ export default function Performers() {
               }}
               tabIndex={0}
             >
-              <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-[var(--border-hairline)] shadow-md group bg-[var(--bg-page)]">
+              <div className="relative w-full aspect-[4/3] rounded-none overflow-hidden border border-[var(--border-hairline)] shadow-md group bg-[var(--bg-page)]">
                 <Link
                   to={teamRedirectUrl}
                   title={`Click to view ${featuredPerformer.name} on Research Interns page`}
@@ -359,7 +359,7 @@ export default function Performers() {
                         className={
                           isSingle
                             ? 'flex flex-col gap-3'
-                            : 'px-3.5 py-2.5 rounded-xl bg-[var(--bg-page)] border border-[var(--border-hairline)] flex flex-wrap items-center justify-between gap-2'
+                            : 'px-3.5 py-2.5 rounded-none bg-[var(--bg-page)] border border-[var(--border-hairline)] flex flex-wrap items-center justify-between gap-2'
                         }
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -431,7 +431,7 @@ export default function Performers() {
               {/* Right: Faculty Commendation & CTA */}
               <div className="lg:col-span-6 flex flex-col justify-between gap-3">
                 {(featuredPerformer.title || featuredPerformer.achievement) && (
-                  <div className="p-4 rounded-2xl bg-[var(--bg-page)] border border-[var(--border-hairline)] space-y-2 flex-1">
+                  <div className="p-4 rounded-none bg-[var(--bg-page)] border border-[var(--border-hairline)] space-y-2 flex-1">
                     <span className="text-[11px] font-sans font-semibold text-[var(--ink-dark)] uppercase tracking-wider block">
                       Faculty Commendation &amp; Impact
                     </span>
