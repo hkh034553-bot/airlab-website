@@ -104,7 +104,7 @@ function MemberPortraitCard({
   const cardElement = (
     <OptimizedTiltCard
       id={`member-${member.id}`}
-      className={`group rounded-2xl overflow-hidden flex flex-col h-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-all duration-200 ${isHighlighted ? 'ring-2 ring-[var(--accent-orange)] shadow-xl' : ''
+      className={`group rounded-none overflow-hidden flex flex-col h-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-all duration-200 ${isHighlighted ? 'ring-2 ring-[var(--accent-orange)] shadow-xl' : ''
         }`}
     >
       {targetUrl ? (
