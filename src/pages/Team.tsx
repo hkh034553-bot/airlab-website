@@ -557,20 +557,7 @@ export default function Team() {
                   onClick={e => e.stopPropagation()}
                   className="w-full max-w-3xl bg-[var(--bg-surface-elevated)] border border-[var(--border-hairline)] rounded-none shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-left relative my-auto font-sans"
                 >
-                  <div className="px-6 py-4 bg-[var(--bg-surface)] border-b border-[var(--border-hairline)] flex items-center justify-between select-none">
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                      {selectedMember.category !== 'Research Interns' && (
-                        <span className="px-3 py-1 rounded-full bg-[var(--accent-orange)] text-white text-[11px] font-sans font-semibold">
-                          {selectedMember.category}
-                        </span>
-                      )}
-                      {selectedMember.isLead && (
-                        <span className="px-3 py-1 rounded-full bg-[var(--bg-page)] border border-[var(--border-hairline)] text-[var(--text-primary)] text-[11px] font-sans font-semibold">
-                          Faculty / Lab Lead
-                        </span>
-                      )}
-                    </div>
-
+                  <div className="px-6 py-4 bg-[var(--bg-surface)] border-b border-[var(--border-hairline)] flex items-center justify-end select-none">
                     <button
                       type="button"
                       onClick={() => setSelectedMember(null)}
@@ -598,14 +585,19 @@ export default function Team() {
                         <h2 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-1.5 font-head leading-tight">
                           {selectedMember.name}
                         </h2>
-                        <p className="text-sm sm:text-base font-semibold text-[var(--accent-orange)] mb-1">
-                          {selectedMember.role}
-                        </p>
-                        {selectedMember.designation && (
-                          <p className="text-xs sm:text-sm text-[var(--text-muted)]">
-                            {selectedMember.designation}
-                          </p>
-                        )}
+                        {selectedMember.role &&
+                          selectedMember.category !== 'Research Interns' &&
+                          selectedMember.role.trim().toLowerCase() !== 'research intern' && (
+                            <p className="text-sm sm:text-base font-semibold text-[var(--accent-orange)] mb-1">
+                              {selectedMember.role}
+                            </p>
+                          )}
+                        {selectedMember.designation &&
+                          selectedMember.designation.trim().toLowerCase() !== selectedMember.role?.trim().toLowerCase() && (
+                            <p className="text-xs sm:text-sm text-[var(--text-muted)]">
+                              {selectedMember.designation}
+                            </p>
+                          )}
                       </div>
                     </div>
 
@@ -622,32 +614,6 @@ export default function Team() {
 
                     {/* Member Metadata Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs font-sans">
-                      <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
-                        <span className="text-[var(--text-subtle)] block mb-1">ROLE / TITLE</span>
-                        <span className="font-semibold text-[var(--text-primary)]">
-                          {selectedMember.role}
-                        </span>
-                      </div>
-
-                      {selectedMember.category !== 'Research Interns' && (
-                        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
-                          <span className="text-[var(--text-subtle)] block mb-1">CATEGORY</span>
-                          <span className="font-semibold text-[var(--accent-orange)]">
-                            {selectedMember.category}
-                            {selectedMember.isLead ? ' • Lab Lead' : ''}
-                          </span>
-                        </div>
-                      )}
-
-                      {selectedMember.designation && (
-                        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
-                          <span className="text-[var(--text-subtle)] block mb-1">ACADEMIC DESIGNATION</span>
-                          <span className="font-semibold text-[var(--text-primary)]">
-                            {selectedMember.designation}
-                          </span>
-                        </div>
-                      )}
-
                       {selectedMember.department && (
                         <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
                           <span className="text-[var(--text-subtle)] block mb-1">DEPARTMENT</span>
@@ -659,7 +625,7 @@ export default function Team() {
 
                       {(selectedMember.tenure || selectedMember.startDate || selectedMember.endDate) && (
                         <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
-                          <span className="text-[var(--text-subtle)] block mb-1">TENURE / COHORT</span>
+                          <span className="text-[var(--text-subtle)] block mb-1">TENURE</span>
                           <span className="font-semibold text-[var(--text-primary)]">
                             {selectedMember.startDate
                               ? `${selectedMember.startDate} — ${selectedMember.endDate || 'Present'}`
@@ -668,14 +634,16 @@ export default function Team() {
                         </div>
                       )}
 
-                      {selectedMember.term && selectedMember.term !== selectedMember.tenure && (
-                        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
-                          <span className="text-[var(--text-subtle)] block mb-1">TERM</span>
-                          <span className="font-semibold text-[var(--text-primary)]">
-                            {selectedMember.term}
-                          </span>
-                        </div>
-                      )}
+                      {selectedMember.term &&
+                        selectedMember.term !== selectedMember.tenure &&
+                        !['faculty', 'research intern', 'research interns'].includes(selectedMember.term.trim().toLowerCase()) && (
+                          <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
+                            <span className="text-[var(--text-subtle)] block mb-1">TERM</span>
+                            <span className="font-semibold text-[var(--text-primary)]">
+                              {selectedMember.term}
+                            </span>
+                          </div>
+                        )}
 
                       {selectedMember.hasEmail() && (
                         <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
