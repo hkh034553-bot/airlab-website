@@ -1,10 +1,31 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Check, GraduationCap, FileText, User, Mail, BookOpen, Phone, Loader2, Briefcase, Upload } from 'lucide-react'
 import { useVacancySettings } from '../lib/vacancy'
 import airLabMark from '../assets/air-lab-mark.png'
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
+
+const TURNSTILE_SITE_KEY = (import.meta.env.VITE_TURNSTILE_SITE_KEY || '').trim()
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: HTMLElement | string,
+        options: {
+          sitekey: string
+          callback?: (token: string) => void
+          'expired-callback'?: () => void
+          'error-callback'?: () => void
+          theme?: 'light' | 'dark' | 'auto'
+        },
+      ) => string
+      remove?: (widgetId: string) => void
+      reset?: (widgetId?: string) => void
+    }
+  }
+}
 
 interface StudentApplicationModalProps {
   isOpen: boolean
@@ -18,6 +39,9 @@ export default function StudentApplicationModal({ isOpen, onClose }: StudentAppl
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [cvFile, setCvFile] = useState<File | null>(null)
+  const [turnstileToken, setTurnstileToken] = useState<string>('')
+  const turnstileContainerRef = useRef<HTMLDivElement | null>(null)
+  const turnstileWidgetIdRef = useRef<string | null>(null)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -30,7 +54,72 @@ export default function StudentApplicationModal({ isOpen, onClose }: StudentAppl
     track: 'Foundational LLMs & Urdu NLP',
     resumeUrl: '',
     statement: '',
+    website: '',
   })
+
+  // ── Optional Cloudflare Turnstile Widget Loader ──
+  useEffect(() => {
+    if (!isOpen || !TURNSTILE_SITE_KEY || submitted) return
+
+    let cancelled = false
+    setTurnstileToken('')
+
+    const mountWidget = () => {
+      if (cancelled || !turnstileContainerRef.current || !window.turnstile) return
+      if (turnstileWidgetIdRef.current && window.turnstile.remove) {
+        try {
+          window.turnstile.remove(turnstileWidgetIdRef.current)
+        } catch {
+          // ignore
+        }
+        turnstileWidgetIdRef.current = null
+      }
+      turnstileContainerRef.current.innerHTML = ''
+      turnstileWidgetIdRef.current = window.turnstile.render(turnstileContainerRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        theme: 'light',
+        callback: (token: string) => {
+          if (!cancelled) setTurnstileToken(token)
+        },
+        'expired-callback': () => {
+          if (!cancelled) setTurnstileToken('')
+        },
+        'error-callback': () => {
+          if (!cancelled) setTurnstileToken('')
+        },
+      })
+    }
+
+    if (window.turnstile) {
+      mountWidget()
+    } else {
+      const existingScript = document.querySelector<HTMLScriptElement>(
+        'script[src^="https://challenges.cloudflare.com/turnstile/v0/api.js"]',
+      )
+      if (existingScript) {
+        existingScript.addEventListener('load', mountWidget)
+      } else {
+        const script = document.createElement('script')
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+        script.async = true
+        script.defer = true
+        script.addEventListener('load', mountWidget)
+        document.head.appendChild(script)
+      }
+    }
+
+    return () => {
+      cancelled = true
+      if (turnstileWidgetIdRef.current && window.turnstile?.remove) {
+        try {
+          window.turnstile.remove(turnstileWidgetIdRef.current)
+        } catch {
+          // ignore
+        }
+        turnstileWidgetIdRef.current = null
+      }
+    }
+  }, [isOpen, submitted])
 
   // ── Scroll Lock Background Feature ──
   useEffect(() => {
@@ -86,6 +175,14 @@ export default function StudentApplicationModal({ isOpen, onClose }: StudentAppl
       data.append('program', formData.program)
       data.append('track', formData.track)
       data.append('statement', formData.statement)
+      data.append('website', formData.website)
+
+      if (TURNSTILE_SITE_KEY) {
+        if (!turnstileToken) {
+          throw new Error('Please complete the CAPTCHA verification before submitting.')
+        }
+        data.append('turnstileToken', turnstileToken)
+      }
 
       if (cvFile) {
         if (cvFile.size > 4 * 1024 * 1024) {
@@ -469,7 +566,16 @@ export default function StudentApplicationModal({ isOpen, onClose }: StudentAppl
                             <input
                               type="file"
                               accept="application/pdf"
-                              onChange={e => setCvFile(e.target.files?.[0] || null)}
+                              onChange={e => {
+                                const file = e.target.files?.[0] || null
+                                if (file && file.size > 4 * 1024 * 1024) {
+                                  setError('Resume PDF exceeds the 4 MB limit. Please upload a PDF under 4 MB or provide a Google Drive / GitHub link.')
+                                  e.target.value = ''
+                                  return
+                                }
+                                setError(null)
+                                setCvFile(file)
+                              }}
                               className="sr-only"
                             />
                           </label>
@@ -506,6 +612,26 @@ export default function StudentApplicationModal({ isOpen, onClose }: StudentAppl
                         className="w-full p-3.5 rounded-xl border border-[var(--border-hairline-dark)] bg-[var(--bg-backdrop)] text-[13.5px] text-[var(--text-primary)] placeholder:text-neutral-400 focus:bg-white focus:border-[var(--accent-orange)] focus:ring-2 focus:ring-[var(--accent-orange)]/15 transition-all resize-none font-sans outline-none"
                       />
                     </div>
+
+                    {/* Hidden Anti-Bot Honeypot Field */}
+                    <div className="sr-only" aria-hidden="true">
+                      <label htmlFor="applicant-website-hp">Website</label>
+                      <input
+                        id="applicant-website-hp"
+                        type="text"
+                        name="website"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        value={formData.website}
+                        onChange={e => setFormData({ ...formData, website: e.target.value })}
+                      />
+                    </div>
+
+                    {TURNSTILE_SITE_KEY && (
+                      <div className="pt-1">
+                        <div ref={turnstileContainerRef} className="min-h-[65px]" />
+                      </div>
+                    )}
                   </fieldset>
                 </div>
 

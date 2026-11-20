@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Copy, Check, Award, FileText, Download, Search, X } from 'lucide-react'
 import { getPublications } from '../lib/data'
+import { fetchCollection, readCachedCollection } from '../lib/contentFetch'
+import { safeHref } from '../lib/safeUrl'
 import TitleReveal from '../components/ui/TitleReveal'
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
 import OptimizedTiltCard from '@/components/ui/optimized-tilt-card'
@@ -10,15 +12,19 @@ export default function Publications() {
   const [searchQuery, setSearchQuery] = useState('')
   const [copiedId, setCopiedId] = useState<string | number | null>(null)
 
-  const [pubData, setPubData] = useState<any[]>(() => getPublications())
+  const [pubData, setPubData] = useState<any[]>(() => {
+    const cached = readCachedCollection<any>('publications')
+    return cached.length > 0 ? cached : getPublications()
+  })
 
   useEffect(() => {
-    fetch('/api/content/publications')
-      .then(r => r.ok ? r.json() : [])
-      .then(d => {
-        if (Array.isArray(d) && d.length > 0) setPubData(d)
-      })
-      .catch(() => { })
+    let active = true
+    fetchCollection<any>('publications').then(d => {
+      if (active && d && d.length > 0) setPubData(d)
+    })
+    return () => {
+      active = false
+    }
   }, [])
 
   // Enforce sorted order: recent papers at top (descending by year, then by id)
@@ -159,9 +165,9 @@ export default function Publications() {
                     </p>
 
                     {/* DOI */}
-                    {pub.doi && (
+                    {pub.doi && safeHref(`https://doi.org/${encodeURIComponent(String(pub.doi).trim())}`) && (
                       <div className="text-xs font-sans text-[var(--text-subtle)]">
-                        DOI: <a href={`https://doi.org/${pub.doi}`} target="_blank" rel="noopener noreferrer" className="text-[var(--accent-orange)] hover:underline">{pub.doi}</a>
+                        DOI: <a href={safeHref(`https://doi.org/${String(pub.doi).trim()}`)} target="_blank" rel="noopener noreferrer" className="text-[var(--accent-orange)] hover:underline">{pub.doi}</a>
                       </div>
                     )}
 
@@ -189,18 +195,18 @@ export default function Publications() {
 
                   {/* Action Buttons: Read Link, PDF, BibTeX Cite */}
                   <div className="flex flex-wrap sm:flex-col items-center sm:items-end gap-2.5 shrink-0 pt-4 md:pt-0 border-t md:border-t-0 border-[var(--border-hairline)]">
-                    {pub.link && (
+                    {safeHref(pub.link) && (
                       <InteractiveHoverButton
-                        href={pub.link}
+                        href={safeHref(pub.link)}
                         variant="primary"
                         size="sm"
                         text="Read Paper"
                       />
                     )}
 
-                    {pub.pdf && (
+                    {safeHref(pub.pdf) && (
                       <InteractiveHoverButton
-                        href={pub.pdf}
+                        href={safeHref(pub.pdf)}
                         variant="dark"
                         size="sm"
                         icon={<Download className="w-3.5 h-3.5" />}

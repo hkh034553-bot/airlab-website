@@ -52,8 +52,20 @@ export async function buildMemberDirectory(options?: {
   const prevModel = contentModels.get('previous-interns')
 
   const [rawTeam, rawPrev] = await Promise.all([
-    teamModel ? teamModel.find(filter).maxTimeMS(4000).lean() : Promise.resolve([]),
-    prevModel ? prevModel.find(filter).maxTimeMS(4000).lean() : Promise.resolve([]),
+    teamModel
+      ? teamModel
+          .find(filter)
+          .select('id _id name role category department researchFocus email linkedin cvUrl image isLead tenure updatedAt createdAt')
+          .maxTimeMS(10000)
+          .lean()
+      : Promise.resolve([]),
+    prevModel
+      ? prevModel
+          .find(filter)
+          .select('id _id name tenure department email linkedin updatedAt createdAt')
+          .maxTimeMS(10000)
+          .lean()
+      : Promise.resolve([]),
   ])
 
   const register = (doc: Record<string, any>, sourceSlug: string) => {

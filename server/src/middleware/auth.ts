@@ -21,12 +21,57 @@ export interface AuthRequest extends Request {
   }
 }
 
+export async function verifyAdminFromCookie(
+  req: Request,
+): Promise<{ id: string; email: string; name?: string } | null> {
+  const token = req.cookies?.token
+  if (!token || typeof token !== 'string') {
+    return null
+  }
+
+  try {
+    const payload = jwt.verify(token, env.JWT_SECRET, {
+      algorithms: ['HS256'],
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    }) as { id: string; email: string; name?: string; pwdFingerprint?: string }
+
+    if (!payload?.id || !payload?.email || !mongoose.Types.ObjectId.isValid(payload.id)) {
+      return null
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      return null
+    }
+
+    const admin = await AdminModel.findById(payload.id).select('+passwordHash').lean()
+    if (
+      !admin ||
+      !admin.passwordHash ||
+      String(admin.email).toLowerCase() !== String(payload.email).toLowerCase()
+    ) {
+      return null
+    }
+
+    const expectedFingerprint = computePasswordFingerprint(admin.passwordHash)
+    if (!payload.pwdFingerprint || payload.pwdFingerprint !== expectedFingerprint) {
+      return null
+    }
+
+    return {
+      id: String(admin._id),
+      email: admin.email,
+      name: admin.name,
+    }
+  } catch {
+    return null
+  }
+}
+
 export async function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private')
 
-  const bearer = req.headers.authorization
-  const headerToken = bearer && /^Bearer\s+/i.test(bearer) ? bearer.replace(/^Bearer\s+/i, '').trim() : undefined
-  const token = headerToken || req.cookies?.token
+  const token = req.cookies?.token
 
   if (!token || typeof token !== 'string') {
     return next(new HttpError(401, 'Unauthorized: please log in to access the admin panel'))
@@ -67,3 +112,4 @@ export async function requireAdmin(req: AuthRequest, res: Response, next: NextFu
     next(new HttpError(401, 'Invalid or expired session. Please log in again.'))
   }
 }
+

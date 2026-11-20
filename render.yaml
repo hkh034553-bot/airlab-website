@@ -15,7 +15,7 @@ services:
       - key: MONGO_URI
         sync: false # Prompts you to paste your MongoDB Atlas URI in the dashboard
       - key: CORS_ORIGINS
-        value: "*"
+        value: https://airlab-website-peach.vercel.app
 
   # 2. React Vite Frontend Static Site
   - type: web

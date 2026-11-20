@@ -22,15 +22,41 @@ export function createApp() {
   app.set('trust proxy', 1)
   app.disable('x-powered-by')
 
+  const allowedOrigins = new Set(env.CORS_ORIGINS.map(o => o.replace(/\/+$/, '')))
+  if (env.PUBLIC_SITE_URL) {
+    allowedOrigins.add(env.PUBLIC_SITE_URL.replace(/\/+$/, ''))
+  }
+
   app.use(helmet())
   app.use(compression())
   app.use(
     cors({
-      origin: (_origin, callback) => {
-        // Allow all origins (localhost, all Vercel previews, custom domains)
-        callback(null, true)
+      origin: (origin, callback) => {
+        // Same-origin / non-browser requests (no Origin header)
+        if (!origin) {
+          callback(null, true)
+          return
+        }
+        const normalized = origin.replace(/\/+$/, '')
+        if (allowedOrigins.has(normalized)) {
+          callback(null, true)
+          return
+        }
+        try {
+          const parsed = new URL(normalized)
+          const host = parsed.hostname.toLowerCase()
+          const isLocal = host === 'localhost' || host === '127.0.0.1'
+          const isVercel = host.endsWith('.vercel.app')
+          if (isLocal || isVercel) {
+            callback(null, true)
+            return
+          }
+        } catch {
+          // invalid origin URL
+        }
+        callback(null, false)
       },
-      credentials: true, // admin auth will use httpOnly cookies
+      credentials: true, // admin auth uses httpOnly cookies / bearer tokens
     }),
   )
   app.use((req, res, next) => {

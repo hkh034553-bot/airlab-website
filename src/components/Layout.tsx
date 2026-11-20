@@ -23,7 +23,52 @@ import Preloader from './Preloader'
 import ScrollIndicator from './ScrollIndicator'
 import StudentApplicationModal from './StudentApplicationModal'
 import { useVacancySettings } from '../lib/vacancy'
+import { prefetchCollection, prefetchAllCoreCollections } from '../lib/contentFetch'
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
+
+function prefetchRoute(route: string) {
+  switch (route) {
+    case 'projects':
+      import('../pages/Projects').catch(() => {})
+      prefetchCollection('projects')
+      break
+    case 'grants':
+      import('../pages/Grants').catch(() => {})
+      prefetchCollection('grants')
+      break
+    case 'publications':
+      import('../pages/Publications').catch(() => {})
+      prefetchCollection('publications')
+      break
+    case 'blogs':
+      import('../pages/Blogs').catch(() => {})
+      prefetchCollection('blogs')
+      break
+    case 'team':
+      import('../pages/Team').catch(() => {})
+      prefetchCollection('team')
+      prefetchCollection('previous-interns')
+      break
+    case 'performers':
+      import('../pages/Performers').catch(() => {})
+      prefetchCollection('performers')
+      break
+    case 'about':
+      import('../pages/About').catch(() => {})
+      prefetchCollection('team')
+      break
+    case 'gallery':
+      import('../pages/Gallery').catch(() => {})
+      prefetchCollection('gallery')
+      prefetchCollection('performers')
+      break
+    case 'contact':
+      import('../pages/Contact').catch(() => {})
+      break
+    default:
+      break
+  }
+}
 
 export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -77,6 +122,10 @@ export default function Layout() {
     setActiveDropdown(null)
     setMobileMenuOpen(false)
   }, [location.pathname, location.search])
+
+  useEffect(() => {
+    prefetchAllCoreCollections()
+  }, [])
 
   // Close dropdown on Escape key or outside click
   useEffect(() => {
@@ -223,7 +272,13 @@ export default function Layout() {
             {/* Research Dropdown */}
             <div
               className="relative"
-              onMouseEnter={() => setActiveDropdown('research')}
+              onMouseEnter={() => {
+                setActiveDropdown('research')
+                prefetchRoute('projects')
+                prefetchRoute('grants')
+                prefetchRoute('publications')
+                prefetchRoute('blogs')
+              }}
               onMouseLeave={() => setActiveDropdown(null)}
             >
               {(() => {
@@ -272,6 +327,8 @@ export default function Layout() {
                       <div className="space-y-1">
                         <Link
                           to="/projects"
+                          onMouseEnter={() => prefetchRoute('projects')}
+                          onFocus={() => prefetchRoute('projects')}
                           className="block p-2.5 rounded-2xl hover:bg-[var(--bg-surface)] transition-all duration-150 group"
                         >
                           <div className="flex items-center gap-2 font-semibold text-[13.5px] text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors">
@@ -285,6 +342,8 @@ export default function Layout() {
 
                         <Link
                           to="/grants"
+                          onMouseEnter={() => prefetchRoute('grants')}
+                          onFocus={() => prefetchRoute('grants')}
                           className="block p-2.5 rounded-2xl hover:bg-[var(--bg-surface)] transition-all duration-150 group"
                         >
                           <div className="flex items-center gap-2 font-semibold text-[13.5px] text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors">
@@ -305,6 +364,8 @@ export default function Layout() {
                       <div className="space-y-1">
                         <Link
                           to="/publications"
+                          onMouseEnter={() => prefetchRoute('publications')}
+                          onFocus={() => prefetchRoute('publications')}
                           className="block p-2.5 rounded-2xl hover:bg-[var(--bg-surface)] transition-all duration-150 group"
                         >
                           <div className="flex items-center gap-2 font-semibold text-[13.5px] text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors">
@@ -318,6 +379,8 @@ export default function Layout() {
 
                         <Link
                           to="/blogs"
+                          onMouseEnter={() => prefetchRoute('blogs')}
+                          onFocus={() => prefetchRoute('blogs')}
                           className="block p-2.5 rounded-2xl hover:bg-[var(--bg-surface)] transition-all duration-150 group"
                         >
                           <div className="flex items-center gap-2 font-semibold text-[13.5px] text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors">
@@ -338,7 +401,11 @@ export default function Layout() {
             {/* People Dropdown */}
             <div
               className="relative"
-              onMouseEnter={() => setActiveDropdown('people')}
+              onMouseEnter={() => {
+                setActiveDropdown('people')
+                prefetchRoute('team')
+                prefetchRoute('performers')
+              }}
               onMouseLeave={() => setActiveDropdown(null)}
             >
               {(() => {
@@ -386,6 +453,8 @@ export default function Layout() {
                       <div className="space-y-1">
                         <Link
                           to="/team?tab=faculty"
+                          onMouseEnter={() => prefetchRoute('team')}
+                          onFocus={() => prefetchRoute('team')}
                           className="block p-2.5 rounded-2xl hover:bg-[var(--bg-surface)] transition-all duration-150 group"
                         >
                           <div className="flex items-center gap-2 font-semibold text-[13.5px] text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors">
@@ -399,6 +468,8 @@ export default function Layout() {
 
                         <Link
                           to="/team?tab=interns"
+                          onMouseEnter={() => prefetchRoute('team')}
+                          onFocus={() => prefetchRoute('team')}
                           className="block p-2.5 rounded-2xl hover:bg-[var(--bg-surface)] transition-all duration-150 group"
                         >
                           <div className="flex items-center gap-2 font-semibold text-[13.5px] text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors">
@@ -412,6 +483,8 @@ export default function Layout() {
 
                         <Link
                           to="/team?tab=previous"
+                          onMouseEnter={() => prefetchRoute('team')}
+                          onFocus={() => prefetchRoute('team')}
                           className="block p-2.5 rounded-2xl hover:bg-[var(--bg-surface)] transition-all duration-150 group"
                         >
                           <div className="flex items-center gap-2 font-semibold text-[13.5px] text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors">
@@ -432,6 +505,8 @@ export default function Layout() {
                       <div className="space-y-1">
                         <Link
                           to="/performers"
+                          onMouseEnter={() => prefetchRoute('performers')}
+                          onFocus={() => prefetchRoute('performers')}
                           className="block p-2.5 rounded-2xl hover:bg-[var(--bg-surface)] transition-all duration-150 group"
                         >
                           <div className="flex items-center gap-2 font-semibold text-[13.5px] text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors">
@@ -452,7 +527,11 @@ export default function Layout() {
             {/* About & Community Dropdown */}
             <div
               className="relative"
-              onMouseEnter={() => setActiveDropdown('about')}
+              onMouseEnter={() => {
+                setActiveDropdown('about')
+                prefetchRoute('about')
+                prefetchRoute('gallery')
+              }}
               onMouseLeave={() => setActiveDropdown(null)}
             >
               {(() => {
@@ -499,6 +578,8 @@ export default function Layout() {
                       <div className="space-y-1">
                         <Link
                           to="/about"
+                          onMouseEnter={() => prefetchRoute('about')}
+                          onFocus={() => prefetchRoute('about')}
                           className="block p-2.5 rounded-2xl hover:bg-[var(--bg-surface)] transition-all duration-150 group"
                         >
                           <div className="flex items-center gap-2 font-semibold text-[13.5px] text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors">
@@ -519,6 +600,8 @@ export default function Layout() {
                       <div className="space-y-1">
                         <Link
                           to="/gallery"
+                          onMouseEnter={() => prefetchRoute('gallery')}
+                          onFocus={() => prefetchRoute('gallery')}
                           className="block p-2.5 rounded-2xl hover:bg-[var(--bg-surface)] transition-all duration-150 group"
                         >
                           <div className="flex items-center gap-2 font-semibold text-[13.5px] text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors">
@@ -539,6 +622,8 @@ export default function Layout() {
             {/* Direct Contact Link */}
             <NavLink
               to="/contact"
+              onMouseEnter={() => prefetchRoute('contact')}
+              onFocus={() => prefetchRoute('contact')}
               className={({ isActive }) =>
                 `relative px-3.5 py-2 rounded-full text-[14px] font-medium transition-colors ${isActive
                   ? 'text-[var(--text-primary)] font-semibold'

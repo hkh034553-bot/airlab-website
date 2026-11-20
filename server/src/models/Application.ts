@@ -21,6 +21,7 @@ const ApplicationSchema = new Schema(
     coverNote: { type: String, trim: true, maxlength: 3000 },
     github: { type: String, trim: true },
     linkedin: { type: String, trim: true },
+    resumeUrl: { type: String, trim: true },
     /** Storage key/path of the uploaded CV (PDF). Never exposed publicly. */
     cv: {
       key: { type: String, required: true },

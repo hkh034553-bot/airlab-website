@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { Calendar, User, CheckCircle2, Clock, Landmark } from 'lucide-react'
 import { getGrants } from '../lib/data'
+import { fetchCollection, readCachedCollection } from '../lib/contentFetch'
 import { getFacultyPriority } from '../lib/utils'
+import { safeHref } from '../lib/safeUrl'
 import type { Grant } from '../types/data'
 import TitleReveal from '../components/ui/TitleReveal'
 import BlurReveal from '../components/ui/blur-reveal'
@@ -130,15 +132,19 @@ function AnimatedGrantAmount({ amount }: { amount: string }) {
 }
 
 export default function Grants() {
-  const [grants, setGrants] = useState<Grant[]>(() => getGrants())
+  const [grants, setGrants] = useState<Grant[]>(() => {
+    const cached = readCachedCollection<Grant>('grants')
+    return cached.length > 0 ? cached : getGrants()
+  })
 
   useEffect(() => {
-    fetch('/api/content/grants')
-      .then(r => r.ok ? r.json() : [])
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) setGrants(data)
-      })
-      .catch(() => {})
+    let active = true
+    fetchCollection<Grant>('grants').then(data => {
+      if (active && data && data.length > 0) setGrants(data)
+    })
+    return () => {
+      active = false
+    }
   }, [])
 
   // Sort: Active grants at top, Completed / older grants at bottom
@@ -258,7 +264,7 @@ export default function Grants() {
                       )}
                     </div>
 
-                    {(grant.leadInvestigator || grant.url) && (
+                    {(grant.leadInvestigator || safeHref(grant.url)) && (
                       <div className="pt-5 border-t border-[var(--border-hairline)] flex flex-wrap items-center justify-between gap-4 text-xs sm:text-[13px] font-sans">
                         {grant.leadInvestigator && (
                           <span className="flex items-center gap-1.5 text-[var(--text-subtle)]">
@@ -267,11 +273,11 @@ export default function Grants() {
                           </span>
                         )}
 
-                        {grant.url && (
+                        {safeHref(grant.url) && (
                           <a
-                            href={grant.url}
+                            href={safeHref(grant.url)}
                             target="_blank"
-                            rel="noreferrer"
+                            rel="noopener noreferrer"
                             className="text-[var(--accent-orange)] hover:underline inline-flex items-center gap-1.5 font-semibold ml-auto"
                           >
                             <span>Funder Website</span>

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { GalleryItem, PerformerItem } from '../types/data'
 import { extractPerformerPhotos, normalizeDbPerformers } from '../lib/performers'
+import { fetchCollection, readCachedCollection } from '../lib/contentFetch'
 import TitleReveal from '../components/ui/TitleReveal'
 import OptimizedTiltCard from '@/components/ui/optimized-tilt-card'
 
@@ -133,28 +134,29 @@ function expandPerformerItems(performers: PerformerItem[]): GalleryPhotoCard[] {
 }
 
 export default function Gallery() {
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([])
-  const [performersList, setPerformersList] = useState<PerformerItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(() => readCachedCollection<GalleryItem>('gallery'))
+  const [performersList, setPerformersList] = useState<PerformerItem[]>(() =>
+    normalizeDbPerformers(readCachedCollection<PerformerItem>('performers'))
+  )
+  const [loading, setLoading] = useState<boolean>(
+    () => readCachedCollection<GalleryItem>('gallery').length === 0 && readCachedCollection<PerformerItem>('performers').length === 0
+  )
   const [activeFilter, setActiveFilter] = useState<GalleryFilter>('All')
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [loadedKeys, setLoadedKeys] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     let active = true
     Promise.all([
-      fetch('/api/content/gallery', { cache: 'no-store' })
-        .then(r => (r.ok ? r.json() : []))
-        .catch(() => []),
-      fetch('/api/content/performers', { cache: 'no-store' })
-        .then(r => (r.ok ? r.json() : []))
-        .catch(() => []),
+      fetchCollection<GalleryItem>('gallery'),
+      fetchCollection<PerformerItem>('performers'),
     ])
       .then(([galleryRes, performersRes]) => {
         if (!active) return
-        if (Array.isArray(galleryRes)) {
+        if (galleryRes) {
           setGalleryItems(galleryRes)
         }
-        if (Array.isArray(performersRes)) {
+        if (performersRes) {
           setPerformersList(normalizeDbPerformers(performersRes))
         }
       })
@@ -277,47 +279,60 @@ export default function Gallery() {
             </p>
           </div>
         ) : (
-          filteredCards.map((card, i) => (
-            <div
-              key={card.key}
-              className={`${card.span || BENTO_SPANS[i % BENTO_SPANS.length]} h-full`}
-            >
-              <OptimizedTiltCard
-                onClick={() => setSelectedIndex(i)}
-                className="h-full rounded-none border border-[var(--border-hairline)] bg-[var(--bg-surface)] cursor-pointer shadow-sm hover:border-[var(--accent-orange)]/50 hover:shadow-lg transition-colors duration-300"
-                style={{ transitionDelay: `${i * 30}ms` }}
+          filteredCards.map((card, i) => {
+            const isLoaded = Boolean(loadedKeys[card.key])
+            const isPriority = i < 4
+            return (
+              <div
+                key={card.key}
+                className={`${card.span || BENTO_SPANS[i % BENTO_SPANS.length]} h-full`}
               >
-                <img
-                  src={card.url}
-                  alt={card.caption || card.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-
-                <div className="absolute top-4 left-4 pointer-events-none">
-                  <span className="px-3 py-1 rounded-full bg-black/55 text-white text-[11px] font-semibold backdrop-blur-sm border border-white/15">
-                    {card.cat}
-                  </span>
-                </div>
-
-                <div className="absolute top-4 right-4 pointer-events-none">
-                  <span className="p-2 rounded-full bg-black/60 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center shadow-xs">
-                    <Maximize2 className="w-3.5 h-3.5" />
-                  </span>
-                </div>
-
-                <div className="absolute bottom-5 left-5 right-5 pointer-events-none">
-                  <h3 className="text-base sm:text-lg font-semibold font-head text-white leading-tight mb-1">
-                    {card.title}
-                  </h3>
-                  {card.caption && (
-                    <p className="text-xs text-white/80 line-clamp-1">{card.caption}</p>
+                <OptimizedTiltCard
+                  onClick={() => setSelectedIndex(i)}
+                  className="h-full rounded-none border border-[var(--border-hairline)] bg-[var(--bg-surface)] cursor-pointer shadow-sm hover:border-[var(--accent-orange)]/50 hover:shadow-lg transition-colors duration-300"
+                  style={{ transitionDelay: `${i * 30}ms` }}
+                >
+                  {!isLoaded && (
+                    <div className="absolute inset-0 bg-[var(--surface-alt)] animate-pulse pointer-events-none" />
                   )}
-                </div>
-              </OptimizedTiltCard>
-            </div>
-          ))
+                  <img
+                    src={card.url}
+                    alt={card.caption || card.title}
+                    onLoad={() => setLoadedKeys(prev => (prev[card.key] ? prev : { ...prev, [card.key]: true }))}
+                    onError={() => setLoadedKeys(prev => (prev[card.key] ? prev : { ...prev, [card.key]: true }))}
+                    className={`w-full h-full object-cover group-hover:scale-105 transition-[transform,opacity] duration-500 ${
+                      isLoaded ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    loading={isPriority ? 'eager' : 'lazy'}
+                    fetchPriority={isPriority ? 'high' : 'auto'}
+                    decoding="async"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+
+                  <div className="absolute top-4 left-4 pointer-events-none">
+                    <span className="px-3 py-1 rounded-full bg-black/55 text-white text-[11px] font-semibold backdrop-blur-sm border border-white/15">
+                      {card.cat}
+                    </span>
+                  </div>
+
+                  <div className="absolute top-4 right-4 pointer-events-none">
+                    <span className="p-2 rounded-full bg-black/60 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center shadow-xs">
+                      <Maximize2 className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+
+                  <div className="absolute bottom-5 left-5 right-5 pointer-events-none">
+                    <h3 className="text-base sm:text-lg font-semibold font-head text-white leading-tight mb-1">
+                      {card.title}
+                    </h3>
+                    {card.caption && (
+                      <p className="text-xs text-white/80 line-clamp-1">{card.caption}</p>
+                    )}
+                  </div>
+                </OptimizedTiltCard>
+              </div>
+            )
+          })
         )}
       </div>
 

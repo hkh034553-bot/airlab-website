@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { safeHref } from "@/lib/safeUrl";
 
 export type InteractiveHoverButtonVariant =
   | "default"
@@ -164,25 +165,28 @@ const InteractiveHoverButton = React.forwardRef<
     }
 
     if (href) {
-      const isExternal = /^https?:\/\//i.test(href);
-      const resolvedTarget = target ?? (isExternal ? "_blank" : undefined);
-      const resolvedRel =
-        rel ?? (resolvedTarget === "_blank" ? "noopener noreferrer" : undefined);
-      return (
-        <a
-          href={href}
-          target={resolvedTarget}
-          rel={resolvedRel}
-          className={sharedClasses}
-          aria-label={props["aria-label"]}
-          title={props.title}
-          onClick={
-            onClick as unknown as React.MouseEventHandler<HTMLAnchorElement>
-          }
-        >
-          {innerContent}
-        </a>
-      );
+      const validHref = safeHref(href) ?? (href.startsWith("mailto:") ? href : undefined);
+      if (validHref) {
+        const isExternal = /^https?:\/\//i.test(validHref);
+        const resolvedTarget = target ?? (isExternal ? "_blank" : undefined);
+        const resolvedRel =
+          rel ?? (resolvedTarget === "_blank" ? "noopener noreferrer" : undefined);
+        return (
+          <a
+            href={validHref}
+            target={resolvedTarget}
+            rel={resolvedRel}
+            className={sharedClasses}
+            aria-label={props["aria-label"]}
+            title={props.title}
+            onClick={
+              onClick as unknown as React.MouseEventHandler<HTMLAnchorElement>
+            }
+          >
+            {innerContent}
+          </a>
+        );
+      }
     }
 
     return (

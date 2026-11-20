@@ -10,6 +10,8 @@ import {
 } from 'lucide-react'
 import TitleReveal from '../components/ui/TitleReveal'
 import rawBlogs from '../data/blogs.json'
+import { fetchCollection, readCachedCollection } from '../lib/contentFetch'
+import { safeHref } from '../lib/safeUrl'
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
 import OptimizedTiltCard from '@/components/ui/optimized-tilt-card'
 
@@ -30,18 +32,9 @@ export interface BlogPost {
   image?: string
 }
 
-const BLOGS_CACHE_KEY = 'airlab_blogs_cache_v1'
-
 function readCachedBlogs(): BlogPost[] {
-  try {
-    const raw = sessionStorage.getItem(BLOGS_CACHE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed
-    }
-  } catch {
-    // ignore storage errors
-  }
+  const cached = readCachedCollection<BlogPost>('blogs')
+  if (cached.length > 0) return cached
   return Array.isArray(rawBlogs) ? (rawBlogs as BlogPost[]) : []
 }
 
@@ -54,24 +47,11 @@ export default function Blogs() {
 
   useEffect(() => {
     let active = true
-    fetch('/api/content/blogs')
-      .then(res => (res.ok ? res.json() : []))
+    fetchCollection<BlogPost>('blogs')
       .then(data => {
-        if (!active) return
-        if (Array.isArray(data)) {
-          setBlogsData(data)
-          try {
-            if (data.length > 0) {
-              sessionStorage.setItem(BLOGS_CACHE_KEY, JSON.stringify(data))
-            } else {
-              sessionStorage.removeItem(BLOGS_CACHE_KEY)
-            }
-          } catch {
-            // ignore storage quota errors
-          }
-        }
+        if (!active || !data) return
+        setBlogsData(data)
       })
-      .catch(() => {})
       .finally(() => {
         if (active) setLoading(false)
       })
@@ -242,9 +222,11 @@ export default function Blogs() {
             ].filter(Boolean) as string[]
             const itemKey = blog._id || blog.id || blog.title || idx
 
+            const safeLink = safeHref(blog.link)
+
             const handleCardClick = () => {
-              if (blog.link && !blog.content && !blog.excerpt) {
-                window.open(blog.link, '_blank', 'noopener,noreferrer')
+              if (safeLink && !blog.content && !blog.excerpt) {
+                window.open(safeLink, '_blank', 'noopener,noreferrer')
               } else {
                 setActivePost(blog)
               }
@@ -309,9 +291,9 @@ export default function Blogs() {
                 </div>
 
                 <div className="mx-7 my-6 pt-4 border-t border-[var(--border-hairline)] flex items-center justify-end">
-                  {blog.link ? (
+                  {safeLink ? (
                     <a
-                      href={blog.link}
+                      href={safeLink}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={e => e.stopPropagation()}
@@ -401,9 +383,9 @@ export default function Blogs() {
               )}
 
               <div className="mt-8 pt-6 border-t border-[var(--border-hairline)] flex items-center justify-end gap-3">
-                {activePost.link && (
+                {safeHref(activePost.link) && (
                   <InteractiveHoverButton
-                    href={activePost.link}
+                    href={safeHref(activePost.link)}
                     variant="primary"
                     size="sm"
                     text="Read Full Article"

@@ -22,9 +22,10 @@
   */
 
   // Default Configuration
+  // NOTE: The backend sync route has been removed. Any future sync route must use a long random secret stored in env.
   const DEFAULT_CONFIG = {
     BACKEND_URL: 'https://airlab-website-peach.vercel.app',
-    SYNC_SECRET: 'airlab-sheets-sync-secret-2026',
+    SYNC_SECRET: '',
     TAB_FACULTY_INTERNS: 'Faculty & Interns',
     TAB_UG_PROJECTS: 'Undergraduate Projects',
     TAB_FUNDED_PROJECTS: 'Funded Projects',
@@ -386,7 +387,23 @@
   * 📋 One-click setup for "Vacancies" and "Student Applications" tabs
   * Also pulls all submitted applications from the website & activates auto-sync triggers!
   */
+  function getSyncSecretOrAlert(silent) {
+    const secret = String(getSetting('SYNC_SECRET') || '').trim()
+    if (!secret) {
+      if (!silent) {
+        SpreadsheetApp.getUi().alert(
+          'Sync Secret Required',
+          'Please set the sync secret first via "⚡ AIR Lab" -> "⚙️ Configure Website URL & Secret".',
+          SpreadsheetApp.getUi().ButtonSet.OK
+        )
+      }
+      return ''
+    }
+    return secret
+  }
+
   function setupVacancyAndApplicationTabs() {
+    if (!getSyncSecretOrAlert(false)) return
     const vacResult = ensureVacanciesSheet()
     const appSheet = ensureApplicationsSheet()
     ensureAutoPullTriggers()
@@ -539,9 +556,9 @@
       }
 
       const body = JSON.parse(e.postData.contents)
-      const expectedSecret = String(getSetting('SYNC_SECRET') || DEFAULT_CONFIG.SYNC_SECRET).trim()
+      const expectedSecret = String(getSetting('SYNC_SECRET') || '').trim()
 
-      if (!body || body.secret !== expectedSecret) {
+      if (!expectedSecret || !body || body.secret !== expectedSecret) {
         return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'Unauthorized secret' })).setMimeType(
           ContentService.MimeType.JSON
         )
@@ -576,9 +593,12 @@
   * Silent background pull of student applications (used by onOpen & 1-minute timer triggers).
   */
   function fetchAndAppendApplicationsSilent() {
+    const syncSecret = String(getSetting('SYNC_SECRET') || '').trim()
+    if (!syncSecret) {
+      return { ok: false, total: 0, added: 0, error: 'Sync secret is not configured' }
+    }
     const cleanBase = getCleanEndpoint().replace(/\/api\/sync\/sheets\/?$/, '')
     const endpoint = cleanBase + '/api/sync/applications'
-    const syncSecret = String(getSetting('SYNC_SECRET') || DEFAULT_CONFIG.SYNC_SECRET).trim()
 
     const options = {
       method: 'get',
@@ -625,6 +645,8 @@
   * and appends any missing entries into the "Student Applications" sheet tab.
   */
   function pullApplicationsFromWebsite() {
+    const syncSecret = getSyncSecretOrAlert(false)
+    if (!syncSecret) return
     const ui = SpreadsheetApp.getUi()
     SpreadsheetApp.getActiveSpreadsheet().toast('Fetching student applications from website...', 'AIR Lab Sync', 5)
     ensureAutoPullTriggers()
@@ -653,8 +675,9 @@
   * Sends sync request to the AIR Lab backend API.
   */
   function sendSyncPayload(payload) {
+    const syncSecret = getSyncSecretOrAlert(false)
+    if (!syncSecret) return
     const endpoint = getCleanEndpoint()
-    const syncSecret = String(getSetting('SYNC_SECRET') || DEFAULT_CONFIG.SYNC_SECRET).trim()
 
     ensureAutoPullTriggers()
 
@@ -826,6 +849,8 @@
   * 🧹 Clean All Placeholder / Mock Records from Website Database
   */
   function cleanPlaceholderData() {
+    const syncSecret = getSyncSecretOrAlert(false)
+    if (!syncSecret) return
     const ui = SpreadsheetApp.getUi()
     const confirm = ui.alert(
       'Clean Placeholder Data',
@@ -836,7 +861,6 @@
 
     const cleanBase = getCleanEndpoint().replace(/\/api\/sync\/sheets\/?$/, '')
     const endpoint = cleanBase + '/api/sync/cleanup'
-    const syncSecret = String(getSetting('SYNC_SECRET') || DEFAULT_CONFIG.SYNC_SECRET).trim()
 
     const options = {
       method: 'post',
@@ -922,7 +946,7 @@
     const currentSecret = getSetting('SYNC_SECRET')
     const secretPrompt = ui.prompt(
       'Configure Sync Secret',
-      'Enter your secret key:\nDefault: ' + DEFAULT_CONFIG.SYNC_SECRET + '\n\nCurrent: ' + currentSecret,
+      'Enter your secret key:\n\nCurrent: ' + (currentSecret ? '(configured)' : '(not set)'),
       ui.ButtonSet.OK_CANCEL
     )
     if (secretPrompt.getSelectedButton() === ui.Button.OK) {
@@ -970,7 +994,7 @@
     const ui = SpreadsheetApp.getUi()
     const confirm = ui.alert(
       'Reset Configuration',
-      'Reset Website URL and Secret to defaults?\n\nURL: ' + DEFAULT_CONFIG.BACKEND_URL + '\nSecret: ' + DEFAULT_CONFIG.SYNC_SECRET,
+      'Reset Website URL and clear the stored Sync Secret?\n\nURL: ' + DEFAULT_CONFIG.BACKEND_URL,
       ui.ButtonSet.YES_NO
     )
     if (confirm === ui.Button.YES) {

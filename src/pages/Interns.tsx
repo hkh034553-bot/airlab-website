@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Building2, BookOpen, Loader2 } from 'lucide-react'
 import type { InternItem } from '../types/data'
 import { getMemberAvatar, DEFAULT_AVATAR } from '../lib/placeholders'
+import { fetchCollection, readCachedCollection } from '../lib/contentFetch'
 import Button from '../components/ui/Button'
 import SectionReveal from '../components/ui/SectionReveal'
 import TitleReveal from '../components/ui/TitleReveal'
@@ -9,18 +10,15 @@ import BlurReveal from '../components/ui/blur-reveal'
 import OptimizedTiltCard from '@/components/ui/optimized-tilt-card'
 
 export default function Interns() {
-  const [interns, setInterns] = useState<InternItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [interns, setInterns] = useState<InternItem[]>(() => readCachedCollection<InternItem>('interns'))
+  const [loading, setLoading] = useState<boolean>(() => readCachedCollection<InternItem>('interns').length === 0)
 
   useEffect(() => {
     let active = true
-    const apiBase = import.meta.env.VITE_API_URL || ''
-    fetch(`${apiBase}/api/content/interns`)
-      .then(r => (r.ok ? r.json() : []))
+    fetchCollection<InternItem>('interns')
       .then(d => {
-        if (active && Array.isArray(d)) setInterns(d)
+        if (active && d) setInterns(d)
       })
-      .catch(() => {})
       .finally(() => {
         if (active) setLoading(false)
       })

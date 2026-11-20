@@ -1,21 +1,23 @@
 import React, { useState, useEffect } from 'react'
 import { getSponsors } from '../lib/data'
+import { fetchCollection, readCachedCollection } from '../lib/contentFetch'
+import { safeHref } from '../lib/safeUrl'
 import type { Sponsor } from '../types/data'
 import TitleReveal from './ui/TitleReveal'
 
 export const SponsorsGrid: React.FC = () => {
-  const [sponsors, setSponsors] = useState<Sponsor[]>(() => getSponsors())
+  const [sponsors, setSponsors] = useState<Sponsor[]>(() => {
+    const cached = readCachedCollection<Sponsor>('sponsors')
+    return cached.length > 0 ? cached : getSponsors()
+  })
 
   useEffect(() => {
     let active = true
-    fetch('/api/content/sponsors')
-      .then(r => (r.ok ? r.json() : null))
-      .then(data => {
-        if (active && Array.isArray(data) && data.length > 0) {
-          setSponsors(data)
-        }
-      })
-      .catch(() => {})
+    fetchCollection<Sponsor>('sponsors').then(data => {
+      if (active && data && data.length > 0) {
+        setSponsors(data)
+      }
+    })
     return () => {
       active = false
     }
@@ -41,36 +43,39 @@ export const SponsorsGrid: React.FC = () => {
 
       {/* Raw logos without circular containers */}
       <div className="grid grid-cols-2 md:grid-cols-4 items-center justify-items-center gap-8 sm:gap-12 md:gap-16 pt-2 pb-2">
-        {sponsors.map(sponsor => (
-          <a
-            key={sponsor.id}
-            href={sponsor.url || '#'}
-            target={sponsor.url ? '_blank' : undefined}
-            rel="noopener noreferrer"
-            title={sponsor.name}
-            aria-label={sponsor.name}
-            className="group flex items-center justify-center p-2 transition-transform duration-300 hover:-translate-y-1 hover:scale-105 cursor-pointer"
-          >
-            {sponsor.logo ? (
-              <img
-                src={sponsor.logo}
-                alt={`${sponsor.name} logo`}
-                className={`w-auto object-contain transition-transform duration-300 group-hover:scale-105 ${
-                  sponsor.id === 'neduet'
-                    ? 'h-14 sm:h-16 md:h-20 max-w-[130px]'
-                    : sponsor.id === 'providus'
-                    ? 'h-8 sm:h-9 md:h-11 max-w-[200px]'
-                    : 'h-10 sm:h-12 md:h-14 max-w-[220px]'
-                }`}
-                loading="lazy"
-              />
-            ) : (
-              <span className="font-sans font-bold text-sm sm:text-base tracking-wide text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors text-center">
-                {sponsor.shortName || sponsor.name}
-              </span>
-            )}
-          </a>
-        ))}
+        {sponsors.map(sponsor => {
+          const validUrl = safeHref(sponsor.url)
+          return (
+            <a
+              key={sponsor.id}
+              href={validUrl || '#'}
+              target={validUrl ? '_blank' : undefined}
+              rel={validUrl ? 'noopener noreferrer' : undefined}
+              title={sponsor.name}
+              aria-label={sponsor.name}
+              className="group flex items-center justify-center p-2 transition-transform duration-300 hover:-translate-y-1 hover:scale-105 cursor-pointer"
+            >
+              {sponsor.logo ? (
+                <img
+                  src={sponsor.logo}
+                  alt={`${sponsor.name} logo`}
+                  className={`w-auto object-contain transition-transform duration-300 group-hover:scale-105 ${
+                    sponsor.id === 'neduet'
+                      ? 'h-14 sm:h-16 md:h-20 max-w-[130px]'
+                      : sponsor.id === 'providus'
+                      ? 'h-8 sm:h-9 md:h-11 max-w-[200px]'
+                      : 'h-10 sm:h-12 md:h-14 max-w-[220px]'
+                  }`}
+                  loading="lazy"
+                />
+              ) : (
+                <span className="font-sans font-bold text-sm sm:text-base tracking-wide text-[var(--text-primary)] group-hover:text-[var(--accent-orange)] transition-colors text-center">
+                  {sponsor.shortName || sponsor.name}
+                </span>
+              )}
+            </a>
+          )
+        })}
       </div>
     </div>
   )

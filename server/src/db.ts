@@ -25,7 +25,7 @@ export async function connectDB(): Promise<typeof mongoose> {
 
     connectionPromise = mongoose
       .connect(env.MONGO_URI, {
-        serverSelectionTimeoutMS: 5_000,
+        serverSelectionTimeoutMS: 8_000,
         maxPoolSize: 10,
       })
       .then((conn) => {

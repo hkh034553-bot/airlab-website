@@ -9,7 +9,9 @@ import BlurReveal from '../components/ui/blur-reveal'
 import OptimizedTiltCard from '@/components/ui/optimized-tilt-card'
 import { getMemberAvatar, DEFAULT_AVATAR } from '../lib/placeholders'
 import { extractPerformerPhotos, normalizeDbPerformers } from '../lib/performers'
+import { fetchCollection, readCachedCollection } from '../lib/contentFetch'
 import { normalizeLinkedInUrl } from '../lib/utils'
+import { safeHref } from '../lib/safeUrl'
 import type { PerformerItem, CoAwardeeInfo } from '../types/data'
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
 
@@ -35,24 +37,25 @@ const slideVariants = {
 }
 
 export default function Performers() {
-  const [performersList, setPerformersList] = useState<PerformerItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [performersList, setPerformersList] = useState<PerformerItem[]>(() =>
+    normalizeDbPerformers(readCachedCollection<PerformerItem>('performers'))
+  )
+  const [loading, setLoading] = useState<boolean>(
+    () => readCachedCollection<PerformerItem>('performers').length === 0
+  )
   const [activeCycleIndex, setActiveCycleIndex] = useState(0)
   const [slideState, setSlideState] = useState({ index: 0, direction: 1 })
   const [isPaused, setIsPaused] = useState(false)
+  const [loadedSlides, setLoadedSlides] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     let active = true
-    fetch('/api/content/performers', { cache: 'no-store' })
-      .then(r => (r.ok ? r.json() : []))
-      .then((d: PerformerItem[]) => {
-        if (!active) return
-        if (Array.isArray(d)) {
-          setPerformersList(normalizeDbPerformers(d))
-          setSlideState({ index: 0, direction: 1 })
-        }
+    fetchCollection<PerformerItem>('performers')
+      .then(d => {
+        if (!active || !d) return
+        setPerformersList(normalizeDbPerformers(d))
+        setSlideState({ index: 0, direction: 1 })
       })
-      .catch(() => {})
       .finally(() => {
         if (active) setLoading(false)
       })
@@ -227,6 +230,9 @@ export default function Performers() {
                   className="relative block w-full h-full cursor-pointer overflow-hidden"
                 >
                   <div className="relative w-full h-full transition-transform duration-500 group-hover:scale-105">
+                    {!loadedSlides[slides[safeSlideIndex]] && (
+                      <div className="absolute inset-0 bg-[var(--surface-alt)] animate-pulse pointer-events-none" />
+                    )}
                     <AnimatePresence initial={false} custom={slideState.direction} mode="popLayout">
                       <motion.img
                         key={`${activeCycleIndex}-${slides[safeSlideIndex]}`}
@@ -242,8 +248,17 @@ export default function Performers() {
                         }}
                         alt={`${featuredPerformer.name} — ${featuredPerformer.month} photo ${safeSlideIndex + 1}`}
                         className="absolute inset-0 w-full h-full object-cover object-center"
+                        loading={safeSlideIndex === 0 ? 'eager' : 'lazy'}
+                        fetchPriority={safeSlideIndex === 0 ? 'high' : 'auto'}
+                        decoding="async"
+                        onLoad={() => {
+                          const url = slides[safeSlideIndex]
+                          if (url) setLoadedSlides(prev => (prev[url] ? prev : { ...prev, [url]: true }))
+                        }}
                         onError={e => {
+                          const url = slides[safeSlideIndex]
                           e.currentTarget.src = DEFAULT_AVATAR
+                          if (url) setLoadedSlides(prev => (prev[url] ? prev : { ...prev, [url]: true }))
                         }}
                       />
                     </AnimatePresence>
@@ -343,14 +358,14 @@ export default function Performers() {
 
                 <div className="space-y-2.5 flex-1 flex flex-col justify-center">
                   {awardees.map((person, idx) => {
-                    const cleanLinkedin = normalizeLinkedInUrl(person.linkedin)
+                    const cleanLinkedin = safeHref(normalizeLinkedInUrl(person.linkedin))
                     const cleanCv =
                       person.cvUrl &&
                       person.cvUrl.trim() !== '' &&
                       person.cvUrl.trim() !== '#' &&
                       !person.cvUrl.includes('placeholder')
-                        ? person.cvUrl
-                        : null
+                        ? safeHref(person.cvUrl)
+                        : undefined
                     const isSingle = awardees.length === 1
 
                     return (

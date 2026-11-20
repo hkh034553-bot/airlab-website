@@ -11,6 +11,7 @@ import {
   JWT_AUDIENCE,
   type AuthRequest,
 } from '../middleware/auth.js'
+import { createRateLimiter } from '../middleware/rateLimit.js'
 import { HttpError } from '../middleware/errors.js'
 
 export const authRouter = Router()
@@ -18,40 +19,30 @@ export const authRouter = Router()
 // Precomputed bcrypt hash used when email is not found to prevent timing-based user enumeration
 const DUMMY_BCRYPT_HASH = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'
 
-// In-memory IP rate limiter + DB-backed per-account lockout to prevent brute-force attacks
-interface AttemptRecord {
-  count: number
-  firstAttempt: number
-}
-const loginAttempts = new Map<string, AttemptRecord>()
-const MAX_ATTEMPTS = 5
-const LOCKOUT_MS = 15 * 60 * 1000 // 15 minutes
+const FREE_FAILURES_THRESHOLD = 5
+const MAX_BACKOFF_SECONDS = 30
 
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const record = loginAttempts.get(ip)
-  if (!record) return true
+// Shared IP rate limiter: 10 attempts per IP per 15 minutes
+const loginIpLimiter = createRateLimiter({
+  prefix: 'auth-login:15m',
+  max: 10,
+  windowSeconds: 15 * 60,
+  message: 'Too many login attempts from this IP address. Please wait 15 minutes before trying again.',
+})
 
-  if (now - record.firstAttempt > LOCKOUT_MS) {
-    loginAttempts.delete(ip)
-    return true
-  }
-
-  return record.count < MAX_ATTEMPTS
+function computeAccountBackoffMs(failedAttempts: number): number {
+  if (failedAttempts <= FREE_FAILURES_THRESHOLD) return 0
+  // After 5 failures: 6th -> 1s, 7th -> 2s, 8th -> 4s, ..., capped at 30s
+  const exponent = failedAttempts - (FREE_FAILURES_THRESHOLD + 1)
+  const delaySec = Math.min(MAX_BACKOFF_SECONDS, Math.pow(2, exponent))
+  return delaySec * 1000
 }
 
-function recordFailedAttempt(ip: string) {
-  const now = Date.now()
-  const record = loginAttempts.get(ip)
-  if (!record || now - record.firstAttempt > LOCKOUT_MS) {
-    loginAttempts.set(ip, { count: 1, firstAttempt: now })
-  } else {
-    record.count += 1
-  }
-}
-
-function resetRateLimit(ip: string) {
-  loginAttempts.delete(ip)
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: 'strict' as const,
+  path: '/',
 }
 
 const LoginSchema = z.object({
@@ -67,18 +58,8 @@ const ChangePasswordSchema = z.object({
     .max(256),
 })
 
-authRouter.post('/login', async (req, res, next) => {
+authRouter.post('/login', loginIpLimiter, async (req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private')
-  const clientIp = req.ip || req.socket.remoteAddress || 'unknown'
-
-  if (!checkRateLimit(clientIp)) {
-    return next(
-      new HttpError(
-        429,
-        'Too many failed login attempts. This IP address has been temporarily locked out for 15 minutes.'
-      )
-    )
-  }
 
   try {
     const { email, password } = LoginSchema.parse(req.body)
@@ -89,35 +70,30 @@ authRouter.post('/login', async (req, res, next) => {
       '+passwordHash +failedLoginAttempts +lockUntil'
     )
 
-    // Check DB-level account lockout (persists across serverless cold starts)
-    if (admin?.lockUntil && new Date(admin.lockUntil).getTime() > Date.now()) {
-      return next(
-        new HttpError(
-          429,
-          'This admin account is temporarily locked due to multiple failed login attempts. Please try again in 15 minutes.'
-        )
-      )
+    // Short progressive per-account backoff (prevents targeted account-lockout DoS while slowing brute force)
+    const now = Date.now()
+    if (admin?.lockUntil) {
+      const waitMs = new Date(admin.lockUntil).getTime() - now
+      if (waitMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, Math.min(waitMs, MAX_BACKOFF_SECONDS * 1000)))
+      }
     }
 
     const hashToCompare = admin?.passwordHash || DUMMY_BCRYPT_HASH
     const isValid = await bcrypt.compare(password, hashToCompare)
 
     if (!admin || !isValid) {
-      recordFailedAttempt(clientIp)
       if (admin) {
         const attempts = (admin.failedLoginAttempts || 0) + 1
         admin.failedLoginAttempts = attempts
-        if (attempts >= MAX_ATTEMPTS) {
-          admin.lockUntil = new Date(Date.now() + LOCKOUT_MS)
-          admin.failedLoginAttempts = 0
-        }
+        const backoffMs = computeAccountBackoffMs(attempts)
+        admin.lockUntil = backoffMs > 0 ? new Date(Date.now() + backoffMs) : null
         await admin.save()
       }
       throw new HttpError(401, 'Invalid email or password')
     }
 
     // Reset failed attempts on successful login
-    resetRateLimit(clientIp)
     admin.failedLoginAttempts = 0
     admin.lockUntil = null
     admin.lastLoginAt = new Date()
@@ -141,15 +117,12 @@ authRouter.post('/login', async (req, res, next) => {
     )
 
     res.cookie('token', token, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: 'strict',
+      ...COOKIE_OPTIONS,
       maxAge: 12 * 60 * 60 * 1000,
     })
 
     res.json({
       success: true,
-      token,
       admin: {
         id: String(admin._id),
         email: admin.email,
@@ -162,11 +135,7 @@ authRouter.post('/login', async (req, res, next) => {
 })
 
 authRouter.post('/logout', (_req, res) => {
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'strict',
-  })
+  res.clearCookie('token', COOKIE_OPTIONS)
   res.json({ success: true, message: 'Logged out successfully' })
 })
 
@@ -228,16 +197,13 @@ authRouter.post('/change-password', requireAdmin, async (req: AuthRequest, res, 
     )
 
     res.cookie('token', newToken, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: 'strict',
+      ...COOKIE_OPTIONS,
       maxAge: 12 * 60 * 60 * 1000,
     })
 
     res.json({
       success: true,
       message: 'Password updated successfully. All other sessions have been invalidated.',
-      token: newToken,
     })
   } catch (err) {
     next(err)

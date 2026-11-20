@@ -26,6 +26,7 @@ export interface Sponsor {
 
 export interface ProjectItem {
   id: number | string
+  _id?: string
   title: string
   category: 'Funded' | 'R&D' | 'Undergraduate' | 'Postgraduate' | string
   programTitle?: string

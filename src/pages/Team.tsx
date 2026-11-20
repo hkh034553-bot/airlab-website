@@ -6,6 +6,7 @@ import { Mail, Search, Loader2, X, ArrowUpRight, FileText } from 'lucide-react'
 import type { TeamMemberData } from '../types/data'
 import { getMemberAvatar, DEFAULT_AVATAR } from '../lib/placeholders'
 import { normalizeLinkedInUrl } from '../lib/utils'
+import { fetchCollection, readCachedCollection } from '../lib/contentFetch'
 import { TeamMemberEntity } from '../entities/TeamMemberEntity'
 import TitleReveal from '../components/ui/TitleReveal'
 import StudentApplicationModal from '../components/StudentApplicationModal'
@@ -26,6 +27,7 @@ interface MemberPortraitCardProps {
   isHighlighted: boolean
   showDesignation?: boolean
   showTooltip?: boolean
+  priority?: boolean
   onSelect: (member: TeamMemberEntity) => void
 }
 
@@ -34,9 +36,11 @@ function MemberPortraitCard({
   isHighlighted,
   showDesignation = true,
   showTooltip = false,
+  priority = false,
   onSelect,
 }: MemberPortraitCardProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const [imgLoaded, setImgLoaded] = useState(false)
   const mouseX = useMotionValue(0)
   const linkedInUrl = member.getLinkedInUrl()
   const designation = showDesignation ? (member.designation || member.role) : null
@@ -56,14 +60,22 @@ function MemberPortraitCard({
   const cardContent = (
     <>
       <div className="relative w-full aspect-[10/11] overflow-hidden bg-[var(--bg-page)] shrink-0">
+        {!imgLoaded && (
+          <div className="absolute inset-0 bg-[var(--surface-alt)] animate-pulse pointer-events-none" />
+        )}
         <img
           src={getMemberAvatar(member.image)}
+          onLoad={() => setImgLoaded(true)}
           onError={(e) => {
             e.currentTarget.src = DEFAULT_AVATAR
+            setImgLoaded(true)
           }}
           alt={member.name}
-          className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
-          loading="lazy"
+          className={`w-full h-full object-cover object-top transition-[transform,opacity] duration-300 group-hover:scale-[1.03] ${imgLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
+          decoding="async"
         />
 
         <div className="pointer-events-none absolute inset-0 bg-[var(--accent-orange)]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -161,27 +173,35 @@ export default function Team() {
     }
   }, [searchParams])
 
-  const [allMembersRaw, setAllMembersRaw] = useState<TeamMemberData[]>([])
-  const [sortedPreviousInterns, setSortedPreviousInterns] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [allMembersRaw, setAllMembersRaw] = useState<TeamMemberData[]>(() =>
+    readCachedCollection<TeamMemberData>('team').map((item: any) => ({
+      ...item,
+      linkedin: normalizeLinkedInUrl(item.linkedin) || item.linkedin,
+    }))
+  )
+  const [sortedPreviousInterns, setSortedPreviousInterns] = useState<any[]>(() =>
+    readCachedCollection<any>('previous-interns')
+  )
+  const [loading, setLoading] = useState<boolean>(
+    () => readCachedCollection<TeamMemberData>('team').length === 0
+  )
 
   useEffect(() => {
     let active = true
-    const apiBase = import.meta.env.VITE_API_URL || ''
     Promise.all([
-      fetch(`${apiBase}/api/content/team`).then(r => (r.ok ? r.json() : [])).catch(() => []),
-      fetch(`${apiBase}/api/content/previous-interns`).then(r => (r.ok ? r.json() : [])).catch(() => []),
+      fetchCollection<TeamMemberData>('team'),
+      fetchCollection<any>('previous-interns'),
     ])
       .then(([team, prev]) => {
         if (!active) return
-        if (Array.isArray(team)) {
+        if (team) {
           const normalized = team.map((item: any) => ({
             ...item,
             linkedin: normalizeLinkedInUrl(item.linkedin) || item.linkedin,
           }))
           setAllMembersRaw(normalized)
         }
-        if (Array.isArray(prev)) {
+        if (prev) {
           setSortedPreviousInterns(prev)
         }
       })
@@ -377,11 +397,12 @@ export default function Team() {
                   )}
                 </div>
               )}
-              {facultyMembers.map(f => (
+              {facultyMembers.map((f, idx) => (
                 <MemberPortraitCard
                   key={f.id}
                   member={f}
                   isHighlighted={highlightedMemberId === f.id}
+                  priority={idx < 4}
                   onSelect={setSelectedMember}
                 />
               ))}
@@ -414,13 +435,14 @@ export default function Team() {
                   )}
                 </div>
               )}
-              {filteredInterns.map(intern => (
+              {filteredInterns.map((intern, idx) => (
                 <MemberPortraitCard
                   key={intern.id}
                   member={intern}
                   isHighlighted={highlightedMemberId === intern.id}
                   showDesignation={false}
                   showTooltip
+                  priority={idx < 4}
                   onSelect={setSelectedMember}
                 />
               ))}
@@ -537,9 +559,11 @@ export default function Team() {
                 >
                   <div className="px-6 py-4 bg-[var(--bg-surface)] border-b border-[var(--border-hairline)] flex items-center justify-between select-none">
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <span className="px-3 py-1 rounded-full bg-[var(--accent-orange)] text-white text-[11px] font-sans font-semibold">
-                        {selectedMember.category}
-                      </span>
+                      {selectedMember.category !== 'Research Interns' && (
+                        <span className="px-3 py-1 rounded-full bg-[var(--accent-orange)] text-white text-[11px] font-sans font-semibold">
+                          {selectedMember.category}
+                        </span>
+                      )}
                       {selectedMember.isLead && (
                         <span className="px-3 py-1 rounded-full bg-[var(--bg-page)] border border-[var(--border-hairline)] text-[var(--text-primary)] text-[11px] font-sans font-semibold">
                           Faculty / Lab Lead
@@ -605,13 +629,15 @@ export default function Team() {
                         </span>
                       </div>
 
-                      <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
-                        <span className="text-[var(--text-subtle)] block mb-1">CATEGORY</span>
-                        <span className="font-semibold text-[var(--accent-orange)]">
-                          {selectedMember.category}
-                          {selectedMember.isLead ? ' • Lab Lead' : ''}
-                        </span>
-                      </div>
+                      {selectedMember.category !== 'Research Interns' && (
+                        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
+                          <span className="text-[var(--text-subtle)] block mb-1">CATEGORY</span>
+                          <span className="font-semibold text-[var(--accent-orange)]">
+                            {selectedMember.category}
+                            {selectedMember.isLead ? ' • Lab Lead' : ''}
+                          </span>
+                        </div>
+                      )}
 
                       {selectedMember.designation && (
                         <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">

@@ -13,6 +13,7 @@ import {
 import { Link, useSearchParams } from 'react-router-dom'
 import { getFacultyPriority } from '../lib/utils'
 import { getProjects } from '../lib/data'
+import { fetchCollection, readCachedCollection } from '../lib/contentFetch'
 import type { ProjectItem } from '../types/data'
 import { getProjectCover, DEFAULT_PROJECT_COVER } from '../lib/placeholders'
 import TitleReveal from '../components/ui/TitleReveal'
@@ -92,14 +93,16 @@ export default function Projects() {
   const [query, setQuery] = useState('')
   const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null)
   const [activeGalleryIndex, setActiveGalleryIndex] = useState<number>(0)
+  const [loadedProjectIds, setLoadedProjectIds] = useState<Record<string, boolean>>({})
 
   // Old visible categories that the user sees in the filter pills row
   const visibleCategories = ['All', 'Funded', 'Undergraduate', 'Postgraduate']
 
   const [projectsData, setProjectsData] = useState<ProjectItem[]>(() => {
     try {
-      const seed = getProjects()
-      return Array.isArray(seed) ? seed.map(p => ({ ...p, areas: getProjectAreas(p) })) : []
+      const cached = readCachedCollection<ProjectItem>('projects')
+      const source = cached.length > 0 ? cached : getProjects()
+      return Array.isArray(source) ? source.map(p => ({ ...p, areas: getProjectAreas(p) })) : []
     } catch {
       return []
     }
@@ -108,20 +111,15 @@ export default function Projects() {
 
   useEffect(() => {
     let active = true
-    const apiBase = import.meta.env.VITE_API_URL || ''
-    fetch(`${apiBase}/api/content/projects`)
-      .then(r => (r.ok ? r.json() : []))
-      .catch(() => [])
-      .then((projs: ProjectItem[]) => {
-        if (!active) return
-        if (Array.isArray(projs)) {
-          setProjectsData(
-            projs.map(p => ({
-              ...p,
-              areas: getProjectAreas(p),
-            }))
-          )
-        }
+    fetchCollection<ProjectItem>('projects')
+      .then(projs => {
+        if (!active || !projs) return
+        setProjectsData(
+          projs.map(p => ({
+            ...p,
+            areas: getProjectAreas(p),
+          }))
+        )
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -387,6 +385,9 @@ export default function Projects() {
         >
           {filtered.map((proj, idx) => {
             const isOngoing = proj.status === 'Ongoing'
+            const projKey = String(proj.id || proj._id || idx)
+            const isLoaded = Boolean(loadedProjectIds[projKey])
+            const isPriority = idx < 4
             const openModal = () => {
               setSelectedProject(proj)
               setActiveGalleryIndex(0)
@@ -412,15 +413,24 @@ export default function Projects() {
                   aria-label={`View details for ${proj.title}`}
                   className="group relative aspect-square w-full rounded-none overflow-hidden border border-[var(--border-hairline)] bg-[var(--bg-surface)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-hover)] hover:border-[var(--accent-orange)]/60 transition-all duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-orange)]"
                 >
+                  {!isLoaded && (
+                    <div className="absolute inset-0 bg-[var(--surface-alt)] animate-pulse pointer-events-none" />
+                  )}
                   {/* Full-bleed Cover Image */}
                   <img
                     src={getProjectCover(proj.coverImage || proj.images?.[0])}
+                    onLoad={() => setLoadedProjectIds(prev => (prev[projKey] ? prev : { ...prev, [projKey]: true }))}
                     onError={(e) => {
                       e.currentTarget.src = DEFAULT_PROJECT_COVER
+                      setLoadedProjectIds(prev => (prev[projKey] ? prev : { ...prev, [projKey]: true }))
                     }}
                     alt={proj.title}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
+                    className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-[transform,opacity] duration-500 ${
+                      isLoaded ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    loading={isPriority ? 'eager' : 'lazy'}
+                    fetchPriority={isPriority ? 'high' : 'auto'}
+                    decoding="async"
                   />
 
                   {/* Always-on bottom gradient for title readability */}

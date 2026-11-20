@@ -1,6 +1,7 @@
 import mongoose from 'mongoose'
 import { createApp } from '../server/src/app.js'
 import { connectDB } from '../server/src/db.js'
+import { isServerMisconfigured } from '../server/src/config/env.js'
 
 const app = createApp()
 
@@ -11,6 +12,13 @@ export const config = {
 }
 
 export default async function handler(req: any, res: any) {
+  if (isServerMisconfigured) {
+    res.statusCode = 500
+    res.setHeader('Content-Type', 'application/json')
+    res.end(JSON.stringify({ error: 'Server misconfigured' }))
+    return
+  }
+
   if (mongoose.connection.readyState !== 1) {
     try {
       await connectDB()

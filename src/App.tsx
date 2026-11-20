@@ -4,38 +4,61 @@ import { ThemeProvider } from './components/ThemeProvider'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 
+const ReloadingView = () => (
+  <div className="min-h-screen bg-[var(--bg-page)] flex flex-col items-center justify-center p-6 text-center">
+    <div className="w-10 h-10 border-3 border-[var(--accent-orange)] border-t-transparent rounded-full animate-spin mb-4" />
+    <p className="text-sm font-medium text-[var(--text-muted)]">Updating to latest version...</p>
+  </div>
+)
+
 /**
- * Robust lazy-load helper that handles new deployments gracefully.
+ * Robust lazy-load helper that handles new deployments and transient network blips gracefully.
  * If dynamic import of a chunk fails (e.g. after a redeploy changed the chunk hash),
- * it performs a one-time page reload to fetch the latest index.html and assets.
+ * it retries once and then performs a one-time page reload to fetch the latest index.html and assets.
  */
 function lazyRetry<T extends ComponentType<any>>(factory: () => Promise<{ default: T }>) {
   return lazy(async () => {
     try {
-      return await factory()
-    } catch (error: any) {
-      const isDynamicImportError =
-        error?.message?.includes?.('dynamically imported module') ||
-        error?.message?.includes?.('Failed to fetch') ||
-        error?.name === 'ChunkLoadError'
+      const mod = await factory()
+      sessionStorage.removeItem('airlab_chunk_reload')
+      return mod
+    } catch (firstError: any) {
+      if ((window as any).__airlabReloading) {
+        return { default: ReloadingView as unknown as T }
+      }
 
-      if (isDynamicImportError) {
-        const lastReload = sessionStorage.getItem('airlab_chunk_reload')
-        const now = Date.now()
-        if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
-          sessionStorage.setItem('airlab_chunk_reload', now.toString())
-          window.location.reload()
-          // Return a reloading placeholder with visible indicator
-          const ReloadingView = () => (
-            <div className="min-h-screen bg-[var(--bg-page)] flex flex-col items-center justify-center p-6 text-center">
-              <div className="w-10 h-10 border-3 border-[var(--accent-orange)] border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-sm font-medium text-[var(--text-muted)]">Updating to latest version...</p>
-            </div>
-          )
+      // Retry once after a short delay in case of a brief network hiccup
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 250))
+        const mod = await factory()
+        sessionStorage.removeItem('airlab_chunk_reload')
+        return mod
+      } catch (error: any) {
+        if ((window as any).__airlabReloading) {
           return { default: ReloadingView as unknown as T }
         }
+
+        const message = String(error?.message || firstError?.message || '')
+        const isDynamicImportError =
+          message.includes('dynamically imported module') ||
+          message.includes('Failed to fetch') ||
+          message.includes('Importing a module script failed') ||
+          message.includes('error loading dynamically imported module') ||
+          message.includes('MIME type') ||
+          error?.name === 'ChunkLoadError'
+
+        if (isDynamicImportError) {
+          const lastReload = sessionStorage.getItem('airlab_chunk_reload')
+          const now = Date.now()
+          if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+            ;(window as any).__airlabReloading = true
+            sessionStorage.setItem('airlab_chunk_reload', now.toString())
+            window.location.reload()
+            return { default: ReloadingView as unknown as T }
+          }
+        }
+        throw error
       }
-      throw error
     }
   })
 }

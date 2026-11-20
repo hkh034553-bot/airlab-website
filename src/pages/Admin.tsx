@@ -34,6 +34,7 @@ import {
   invalidateVacancyCache,
   type VacancySettings,
 } from '../lib/vacancy'
+import { safeHref } from '../lib/safeUrl'
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button'
 
 type FieldType =
@@ -388,9 +389,8 @@ function compressImageFile(file: File): Promise<string> {
 }
 
 export default function AdminDashboard() {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('airlab_admin_token'))
   const [adminUser, setAdminUser] = useState<{ id: string; email: string; name: string } | null>(null)
-  const [authChecking, setAuthChecking] = useState<boolean>(() => Boolean(localStorage.getItem('airlab_admin_token')))
+  const [authChecking, setAuthChecking] = useState<boolean>(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState<string | null>(null)
@@ -424,10 +424,54 @@ export default function AdminDashboard() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
+  const [downloadingBackup, setDownloadingBackup] = useState(false)
+
+  const handleDownloadBackup = async () => {
+    if (!token || !adminUser || downloadingBackup) return
+    setDownloadingBackup(true)
+    setBannerNotice(null)
+    try {
+      const res = await fetch('/api/admin/backup', {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+        cache: 'no-store',
+      })
+      if (res.status === 401) {
+        handleLogout()
+        throw new Error('Session expired. Please sign in again.')
+      }
+      if (!res.ok) {
+        throw new Error(`Backup export failed (HTTP ${res.status})`)
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      const dateStamp = new Date().toISOString().slice(0, 10)
+      a.href = url
+      a.download = `airlab-db-backup-${dateStamp}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      setBannerNotice({ type: 'success', text: 'Database backup snapshot downloaded.' })
+    } catch (err: any) {
+      setBannerNotice({ type: 'error', text: err.message || 'Could not download database backup' })
+    } finally {
+      setDownloadingBackup(false)
+    }
+  }
+
+  const clearLegacyStorage = () => {
+    try {
+      const legacyKey = ['airlab', 'admin', 'token'].join('_')
+      window.localStorage.removeItem(legacyKey)
+    } catch {
+      // ignore storage errors
+    }
+  }
 
   const handleLogout = () => {
-    localStorage.removeItem('airlab_admin_token')
-    setToken(null)
+    clearLegacyStorage()
     setAdminUser(null)
     setAuthChecking(false)
     setItems([])
@@ -437,18 +481,12 @@ export default function AdminDashboard() {
     fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => { })
   }
 
-  // Strictly verify authentication token against the backend DB before rendering the dashboard
+  // Strictly verify authentication session cookie against the backend DB before rendering the dashboard
   useEffect(() => {
-    if (!token) {
-      setAdminUser(null)
-      setAuthChecking(false)
-      return
-    }
-
+    clearLegacyStorage()
     let active = true
     setAuthChecking(true)
     fetch('/api/auth/me', {
-      headers: { Authorization: `Bearer ${token}` },
       credentials: 'include',
       cache: 'no-store',
     })
@@ -462,21 +500,25 @@ export default function AdminDashboard() {
           setAdminUser(data.admin)
           setAuthChecking(false)
         } else {
-          handleLogout()
+          setAdminUser(null)
+          setAuthChecking(false)
         }
       })
       .catch(() => {
-        if (active) handleLogout()
+        if (active) {
+          setAdminUser(null)
+          setAuthChecking(false)
+        }
       })
 
     return () => {
       active = false
     }
-  }, [token])
+  }, [])
 
   // Load records or settings when activeTab changes (only after adminUser is verified)
   useEffect(() => {
-    if (!token || !adminUser) return
+    if (!adminUser) return
     setEditingItem(null)
     setSearchQuery('')
     setBannerNotice(null)
@@ -491,7 +533,6 @@ export default function AdminDashboard() {
 
     if (activeTab === 'vacancy-settings') {
       fetch('/api/admin/settings/vacancy', {
-        headers: { Authorization: `Bearer ${token}` },
         credentials: 'include',
         cache: 'no-store',
       })
@@ -519,7 +560,6 @@ export default function AdminDashboard() {
 
     const url = activeTab === 'applications' ? '/api/applications/admin' : `/api/admin/${activeTab}`
     fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
       credentials: 'include',
       cache: 'no-store',
     })
@@ -550,14 +590,12 @@ export default function AdminDashboard() {
       setLoadingMembers(true)
       Promise.all([
         fetch('/api/admin/team', {
-          headers: { Authorization: `Bearer ${token}` },
           credentials: 'include',
           cache: 'no-store',
         })
           .then(r => (r.ok ? r.json() : []))
           .catch(() => []),
         fetch('/api/admin/previous-interns', {
-          headers: { Authorization: `Bearer ${token}` },
           credentials: 'include',
           cache: 'no-store',
         })
@@ -626,7 +664,7 @@ export default function AdminDashboard() {
     return () => {
       active = false
     }
-  }, [activeTab, token, adminUser])
+  }, [activeTab, adminUser])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -642,13 +680,12 @@ export default function AdminDashboard() {
       })
 
       const data = await res.json().catch(() => ({}))
-      if (!res.ok || !data.token || !data.admin) {
+      if (!res.ok || !data.admin) {
         throw new Error(data.error || 'Invalid email or password')
       }
 
-      localStorage.setItem('airlab_admin_token', data.token)
+      clearLegacyStorage()
       setAdminUser(data.admin)
-      setToken(data.token)
       setAuthChecking(false)
       setPassword('')
     } catch (err: any) {
@@ -660,7 +697,7 @@ export default function AdminDashboard() {
 
   const handleSaveItem = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editingItem || !token || !adminUser) return
+    if (!editingItem || !adminUser) return
     setSaving(true)
     setBannerNotice(null)
     setModalError(null)
@@ -735,7 +772,6 @@ export default function AdminDashboard() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         credentials: 'include',
         body: JSON.stringify(payload),
@@ -774,7 +810,7 @@ export default function AdminDashboard() {
   }
 
   const handleDeleteItem = async (id: string) => {
-    if (!id || !token || !adminUser) return
+    if (!id || !adminUser) return
     if (!confirm('Are you sure you want to permanently delete this record from the database?')) return
     setBannerNotice(null)
 
@@ -782,7 +818,6 @@ export default function AdminDashboard() {
       const url = activeTab === 'applications' ? `/api/applications/admin/${id}` : `/api/admin/${activeTab}/${id}`
       const res = await fetch(url, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
         credentials: 'include',
       })
 
@@ -804,7 +839,7 @@ export default function AdminDashboard() {
   }
 
   const handleStatusChange = async (appId: string, status: string) => {
-    if (!token || !adminUser) return
+    if (!adminUser) return
     setBannerNotice(null)
 
     try {
@@ -812,7 +847,6 @@ export default function AdminDashboard() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         credentials: 'include',
         body: JSON.stringify({ status }),
@@ -837,7 +871,7 @@ export default function AdminDashboard() {
 
   const handleSaveVacancySettings = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!token || !adminUser) return
+    if (!adminUser) return
     setSavingVacancy(true)
     setBannerNotice(null)
 
@@ -846,7 +880,6 @@ export default function AdminDashboard() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         credentials: 'include',
         body: JSON.stringify(vacancySettings),
@@ -877,7 +910,7 @@ export default function AdminDashboard() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!token || !adminUser) return
+    if (!adminUser) return
     setBannerNotice(null)
 
     if (newPassword.length < 8) {
@@ -895,7 +928,6 @@ export default function AdminDashboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         credentials: 'include',
         body: JSON.stringify({ currentPassword, newPassword }),
@@ -906,10 +938,6 @@ export default function AdminDashboard() {
         throw new Error(data.error || 'Failed to change password')
       }
 
-      if (data.token) {
-        localStorage.setItem('airlab_admin_token', data.token)
-        setToken(data.token)
-      }
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
@@ -953,7 +981,7 @@ export default function AdminDashboard() {
   }
 
   // --- LOGIN SCREEN ---
-  if (!token || !adminUser) {
+  if (!adminUser) {
     return (
       <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] flex items-center justify-center p-4">
         <div className="w-full max-w-sm bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-[8px] shadow-xl p-8">
@@ -1089,6 +1117,15 @@ export default function AdminDashboard() {
         </div>
 
         <div className="hidden md:block pt-6 mt-6 border-t border-[var(--border-hairline)]">
+          <button
+            type="button"
+            onClick={handleDownloadBackup}
+            disabled={downloadingBackup}
+            className="w-full mb-3 px-3 py-2 rounded-[4px] border border-[var(--border-hairline)] bg-[var(--bg-page)] hover:border-[var(--accent-orange)] text-xs font-medium text-[var(--text-primary)] flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <Download className="w-3.5 h-3.5 text-[var(--accent-orange)]" />
+            <span>{downloadingBackup ? 'Exporting Backup...' : 'Download DB Backup'}</span>
+          </button>
           <div className="text-xs text-[var(--text-muted)] mb-1">
             Signed in as <strong className="text-[var(--text-primary)]">{adminUser.name}</strong>
           </div>
@@ -1115,24 +1152,35 @@ export default function AdminDashboard() {
             </p>
           </div>
 
-          {!['applications', 'vacancy-settings', 'security'].includes(activeTab) && (
-            <InteractiveHoverButton
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
               type="button"
-              variant="primary"
-              size="sm"
-              onClick={() => {
-                setModalError(null)
-                setNewImageUrl('')
-                setMemberDropdownOpen(false)
-                setMemberDropdownSearch('')
-                setMemberCategoryFilter('All')
-                setEditingItem(buildDefaultItem(activeTab, items.length))
-                setIsNew(true)
-              }}
-              icon={<Plus className="w-3.5 h-3.5" />}
-              text="Add New Entry"
-            />
-          )}
+              onClick={handleDownloadBackup}
+              disabled={downloadingBackup}
+              className="md:hidden px-3 py-2 rounded-[4px] border border-[var(--border-hairline)] bg-[var(--bg-surface)] hover:border-[var(--accent-orange)] text-xs font-medium text-[var(--text-primary)] inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <Download className="w-3.5 h-3.5 text-[var(--accent-orange)]" />
+              <span>{downloadingBackup ? 'Exporting...' : 'Download DB Backup'}</span>
+            </button>
+            {!['applications', 'vacancy-settings', 'security'].includes(activeTab) && (
+              <InteractiveHoverButton
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setModalError(null)
+                  setNewImageUrl('')
+                  setMemberDropdownOpen(false)
+                  setMemberDropdownSearch('')
+                  setMemberCategoryFilter('All')
+                  setEditingItem(buildDefaultItem(activeTab, items.length))
+                  setIsNew(true)
+                }}
+                icon={<Plus className="w-3.5 h-3.5" />}
+                text="Add New Entry"
+              />
+            )}
+          </div>
         </header>
 
         {bannerNotice && (
@@ -1390,14 +1438,24 @@ export default function AdminDashboard() {
                       <span><strong>Phone:</strong> {app.phone}</span>
                       {app.rollNo && <span><strong>Roll No:</strong> {app.rollNo}</span>}
                       <span><strong>Level:</strong> {app.degreeYear}</span>
-                      {app.github && (
+                      {safeHref(app.github) && (
                         <a
-                          href={app.github}
+                          href={safeHref(app.github)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[var(--accent-orange)] hover:underline"
                         >
                           Portfolio / GitHub
+                        </a>
+                      )}
+                      {safeHref(app.resumeUrl) && (
+                        <a
+                          href={safeHref(app.resumeUrl)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[var(--accent-orange)] hover:underline"
+                        >
+                          Resume link
                         </a>
                       )}
                     </div>
@@ -1410,18 +1468,24 @@ export default function AdminDashboard() {
                   </div>
 
                   <div className="flex items-center gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-[var(--border-hairline)] shrink-0">
-                    {app.cv?.key && app.cv.key !== 'attached' && (
-                      <a
-                        href={app.cv.key}
-                        download={app.cv.originalName || 'resume.pdf'}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] border border-[var(--border-hairline)] bg-[var(--bg-page)] hover:border-[var(--accent-orange)] text-xs text-[var(--text-primary)]"
-                      >
-                        <Download className="w-3.5 h-3.5 text-[var(--accent-orange)]" />
-                        <span>Resume</span>
-                      </a>
-                    )}
+                    {(() => {
+                      const rawKey = typeof app.cv?.key === 'string' ? app.cv.key : ''
+                      const cvHref = rawKey.startsWith('data:application/pdf;base64,')
+                        ? rawKey
+                        : safeHref(rawKey)
+                      return cvHref ? (
+                        <a
+                          href={cvHref}
+                          download={app.cv.originalName || 'resume.pdf'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] border border-[var(--border-hairline)] bg-[var(--bg-page)] hover:border-[var(--accent-orange)] text-xs text-[var(--text-primary)]"
+                        >
+                          <Download className="w-3.5 h-3.5 text-[var(--accent-orange)]" />
+                          <span>Resume</span>
+                        </a>
+                      ) : null
+                    })()}
 
                     <select
                       value={app.status || 'New'}
