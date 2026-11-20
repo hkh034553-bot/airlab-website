@@ -427,12 +427,11 @@ export default function AdminDashboard() {
   const [downloadingBackup, setDownloadingBackup] = useState(false)
 
   const handleDownloadBackup = async () => {
-    if (!token || !adminUser || downloadingBackup) return
+    if (!adminUser || downloadingBackup) return
     setDownloadingBackup(true)
     setBannerNotice(null)
     try {
       const res = await fetch('/api/admin/backup', {
-        headers: { Authorization: `Bearer ${token}` },
         credentials: 'include',
         cache: 'no-store',
       })
