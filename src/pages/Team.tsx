@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence, useMotionValue } from 'framer-motion'
-import { Mail, Search, Loader2, X, ArrowUpRight } from 'lucide-react'
+import { Mail, Search, Loader2, X, ArrowUpRight, FileText } from 'lucide-react'
 import type { TeamMemberData } from '../types/data'
 import { getMemberAvatar, DEFAULT_AVATAR } from '../lib/placeholders'
 import { normalizeLinkedInUrl } from '../lib/utils'
@@ -25,6 +26,7 @@ interface MemberPortraitCardProps {
   isHighlighted: boolean
   showDesignation?: boolean
   showTooltip?: boolean
+  onSelect: (member: TeamMemberEntity) => void
 }
 
 function MemberPortraitCard({
@@ -32,13 +34,11 @@ function MemberPortraitCard({
   isHighlighted,
   showDesignation = true,
   showTooltip = false,
+  onSelect,
 }: MemberPortraitCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const mouseX = useMotionValue(0)
   const linkedInUrl = member.getLinkedInUrl()
-  const fallbackUrl = member.getPrimaryActionUrl()
-  const targetUrl = linkedInUrl || (fallbackUrl !== '#' ? fallbackUrl : null)
-  const isExternal = Boolean(linkedInUrl || (targetUrl && targetUrl.startsWith('http')))
   const designation = showDesignation ? (member.designation || member.role) : null
 
   const tooltipTitle = member.researchFocus || member.department
@@ -66,21 +66,12 @@ function MemberPortraitCard({
           loading="lazy"
         />
 
-        {targetUrl && (
-          <div className="pointer-events-none absolute inset-0 bg-[var(--accent-orange)]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-            <span className="inline-flex items-center gap-1.5 text-white text-xs font-sans font-semibold uppercase tracking-[0.2em] border-b border-white/80 pb-1">
-              {linkedInUrl ? (
-                <>
-                  <Linkedin className="w-3.5 h-3.5" />
-                  <span>Visit LinkedIn</span>
-                </>
-              ) : (
-                <span>View Details</span>
-              )}
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </span>
-          </div>
-        )}
+        <div className="pointer-events-none absolute inset-0 bg-[var(--accent-orange)]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+          <span className="inline-flex items-center gap-1.5 text-white text-xs font-sans font-semibold uppercase tracking-[0.2em] border-b border-white/80 pb-1">
+            <span>View More Details</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </span>
+        </div>
       </div>
 
       <div className="px-4 py-3.5 flex-1 flex items-center justify-between gap-2.5 bg-[var(--bg-surface)]">
@@ -107,19 +98,14 @@ function MemberPortraitCard({
       className={`group rounded-none overflow-hidden flex flex-col h-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/40 hover:shadow-lg transition-all duration-200 ${isHighlighted ? 'ring-2 ring-[var(--accent-orange)] shadow-xl' : ''
         }`}
     >
-      {targetUrl ? (
-        <a
-          href={targetUrl}
-          target={isExternal ? '_blank' : undefined}
-          rel={isExternal ? 'noopener noreferrer' : undefined}
-          title={linkedInUrl ? `${member.name} — LinkedIn` : member.name}
-          className="flex flex-col h-full cursor-pointer"
-        >
-          {cardContent}
-        </a>
-      ) : (
-        <div className="flex flex-col h-full">{cardContent}</div>
-      )}
+      <button
+        type="button"
+        onClick={() => onSelect(member)}
+        aria-label={`View more details for ${member.name}`}
+        className="flex flex-col h-full w-full text-left cursor-pointer"
+      >
+        {cardContent}
+      </button>
     </OptimizedTiltCard>
   )
 
@@ -152,6 +138,7 @@ export default function Team() {
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState<TabType>('faculty')
   const [applyModalOpen, setApplyModalOpen] = useState(false)
+  const [selectedMember, setSelectedMember] = useState<TeamMemberEntity | null>(null)
   const [highlightedMemberId, setHighlightedMemberId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -258,6 +245,30 @@ export default function Team() {
       return () => clearTimeout(timer)
     }
   }, [highlightedMemberId])
+
+  useEffect(() => {
+    if (!selectedMember) return
+    const scrollY = window.scrollY
+    const originalOverflow = document.body.style.overflow
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+
+    document.body.style.overflow = 'hidden'
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedMember(null)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      document.body.style.paddingRight = ''
+      window.scrollTo(0, scrollY)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [selectedMember])
 
   const tabs: { id: TabType; label: string; count?: number }[] = [
     { id: 'faculty', label: 'Faculty', count: facultyMembers.length },
@@ -371,6 +382,7 @@ export default function Team() {
                   key={f.id}
                   member={f}
                   isHighlighted={highlightedMemberId === f.id}
+                  onSelect={setSelectedMember}
                 />
               ))}
             </div>
@@ -409,6 +421,7 @@ export default function Team() {
                   isHighlighted={highlightedMemberId === intern.id}
                   showDesignation={false}
                   showTooltip
+                  onSelect={setSelectedMember}
                 />
               ))}
             </div>
@@ -504,6 +517,204 @@ export default function Team() {
         isOpen={applyModalOpen}
         onClose={() => setApplyModalOpen(false)}
       />
+
+      {/* Member Detail Modal (Faculty & Research Interns) */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {selectedMember && (
+              <div
+                className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm overflow-y-auto"
+                onClick={() => setSelectedMember(null)}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.98, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={e => e.stopPropagation()}
+                  className="w-full max-w-3xl bg-[var(--bg-surface-elevated)] border border-[var(--border-hairline)] rounded-none shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-left relative my-auto font-sans"
+                >
+                  <div className="px-6 py-4 bg-[var(--bg-surface)] border-b border-[var(--border-hairline)] flex items-center justify-between select-none">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <span className="px-3 py-1 rounded-full bg-[var(--accent-orange)] text-white text-[11px] font-sans font-semibold">
+                        {selectedMember.category}
+                      </span>
+                      {selectedMember.isLead && (
+                        <span className="px-3 py-1 rounded-full bg-[var(--bg-page)] border border-[var(--border-hairline)] text-[var(--text-primary)] text-[11px] font-sans font-semibold">
+                          Faculty / Lab Lead
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMember(null)}
+                      className="p-1.5 text-[var(--text-subtle)] hover:text-[var(--text-primary)] rounded-full hover:bg-[var(--bg-page)] transition-colors cursor-pointer"
+                      aria-label="Close member details modal"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="p-6 sm:p-8 overflow-y-auto flex-1">
+                    {/* Profile Header */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-7">
+                      <div className="w-32 h-36 sm:w-40 sm:h-44 shrink-0 overflow-hidden bg-[var(--bg-page)] border border-[var(--border-hairline)] rounded-none">
+                        <img
+                          src={getMemberAvatar(selectedMember.image)}
+                          onError={e => {
+                            e.currentTarget.src = DEFAULT_AVATAR
+                          }}
+                          alt={selectedMember.name}
+                          className="w-full h-full object-cover object-top"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-1.5 font-head leading-tight">
+                          {selectedMember.name}
+                        </h2>
+                        <p className="text-sm sm:text-base font-semibold text-[var(--accent-orange)] mb-1">
+                          {selectedMember.role}
+                        </p>
+                        {selectedMember.designation && (
+                          <p className="text-xs sm:text-sm text-[var(--text-muted)]">
+                            {selectedMember.designation}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {selectedMember.researchFocus && (
+                      <div className="mb-7">
+                        <span className="text-[11px] font-sans font-semibold uppercase tracking-wider text-[var(--text-subtle)] block mb-1.5">
+                          RESEARCH FOCUS / SPECIALTY
+                        </span>
+                        <p className="text-sm sm:text-base text-[var(--text-muted)] leading-relaxed font-normal">
+                          {selectedMember.researchFocus}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Member Metadata Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs font-sans">
+                      <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
+                        <span className="text-[var(--text-subtle)] block mb-1">ROLE / TITLE</span>
+                        <span className="font-semibold text-[var(--text-primary)]">
+                          {selectedMember.role}
+                        </span>
+                      </div>
+
+                      <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
+                        <span className="text-[var(--text-subtle)] block mb-1">CATEGORY</span>
+                        <span className="font-semibold text-[var(--accent-orange)]">
+                          {selectedMember.category}
+                          {selectedMember.isLead ? ' • Lab Lead' : ''}
+                        </span>
+                      </div>
+
+                      {selectedMember.designation && (
+                        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
+                          <span className="text-[var(--text-subtle)] block mb-1">ACADEMIC DESIGNATION</span>
+                          <span className="font-semibold text-[var(--text-primary)]">
+                            {selectedMember.designation}
+                          </span>
+                        </div>
+                      )}
+
+                      {selectedMember.department && (
+                        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
+                          <span className="text-[var(--text-subtle)] block mb-1">DEPARTMENT</span>
+                          <span className="font-semibold text-[var(--text-primary)]">
+                            {selectedMember.department}
+                          </span>
+                        </div>
+                      )}
+
+                      {(selectedMember.tenure || selectedMember.startDate || selectedMember.endDate) && (
+                        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
+                          <span className="text-[var(--text-subtle)] block mb-1">TENURE / COHORT</span>
+                          <span className="font-semibold text-[var(--text-primary)]">
+                            {selectedMember.startDate
+                              ? `${selectedMember.startDate} — ${selectedMember.endDate || 'Present'}`
+                              : selectedMember.tenure}
+                          </span>
+                        </div>
+                      )}
+
+                      {selectedMember.term && selectedMember.term !== selectedMember.tenure && (
+                        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
+                          <span className="text-[var(--text-subtle)] block mb-1">TERM</span>
+                          <span className="font-semibold text-[var(--text-primary)]">
+                            {selectedMember.term}
+                          </span>
+                        </div>
+                      )}
+
+                      {selectedMember.hasEmail() && (
+                        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
+                          <span className="text-[var(--text-subtle)] block mb-1">EMAIL ADDRESS</span>
+                          <a
+                            href={`mailto:${selectedMember.email}`}
+                            className="font-semibold text-[var(--accent-orange)] hover:underline inline-flex items-center gap-1.5 break-all"
+                          >
+                            <Mail className="w-3.5 h-3.5 shrink-0" />
+                            <span>{selectedMember.email}</span>
+                          </a>
+                        </div>
+                      )}
+
+                      {selectedMember.getLinkedInUrl() && (
+                        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
+                          <span className="text-[var(--text-subtle)] block mb-1">LINKEDIN</span>
+                          <a
+                            href={selectedMember.getLinkedInUrl()!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-[var(--accent-orange)] hover:underline inline-flex items-center gap-1.5"
+                          >
+                            <Linkedin className="w-3.5 h-3.5 shrink-0" />
+                            <span>View LinkedIn Profile</span>
+                            <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
+                          </a>
+                        </div>
+                      )}
+
+                      {selectedMember.hasResume() && (
+                        <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-none">
+                          <span className="text-[var(--text-subtle)] block mb-1">CV / RESUME</span>
+                          <a
+                            href={selectedMember.cvUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-[var(--accent-orange)] hover:underline inline-flex items-center gap-1.5"
+                          >
+                            <FileText className="w-3.5 h-3.5 shrink-0" />
+                            <span>View CV / Resume</span>
+                            <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="px-6 py-4 bg-[var(--bg-surface)] border-t border-[var(--border-hairline)] flex items-center justify-end">
+                    <InteractiveHoverButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => setSelectedMember(null)}
+                      icon={<X className="w-4 h-4" />}
+                      text="Close"
+                      className="font-bold"
+                    />
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
     </div>
   )
 }

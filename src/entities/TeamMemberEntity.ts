@@ -17,6 +17,8 @@ export interface TeamMemberData {
   researchFocus?: string
   term?: string
   year?: number
+  startDate?: string
+  endDate?: string
   order?: number
 }
 
@@ -40,6 +42,8 @@ export class TeamMemberEntity {
   public readonly researchFocus?: string
   public readonly term?: string
   public readonly year: number
+  public readonly startDate?: string
+  public readonly endDate?: string
   public readonly order: number
 
   constructor(data: TeamMemberData) {
@@ -58,6 +62,8 @@ export class TeamMemberEntity {
     this.researchFocus = data.researchFocus
     this.term = data.term || 'Fall 2025 – Present'
     this.year = data.year || 2026
+    this.startDate = data.startDate
+    this.endDate = data.endDate
     this.order = data.order || 0
   }
 
