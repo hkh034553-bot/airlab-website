@@ -162,6 +162,107 @@ function MissionConvergenceVisual() {
   )
 }
 
+/** Geometric SVG: Aims Target & Alignment */
+function AimsTargetVisual() {
+  return (
+    <OptimizedTiltCard className="group relative w-full rounded-none bg-[var(--ink-dark)] border border-[var(--border-hairline)] hover:border-[var(--accent-orange)] hover:shadow-[0_20px_48px_rgba(123,44,191,0.22)] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center overflow-hidden shadow-xl">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-radial from-[#C77DFF]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+      />
+      <svg
+        viewBox="0 0 280 170"
+        fill="none"
+        aria-hidden="true"
+        className="relative z-10 w-full max-w-[280px] h-auto transition-transform duration-500 group-hover:scale-[1.04]"
+      >
+        <circle cx="140" cy="85" r="64" stroke="rgba(224,170,255,0.2)" strokeWidth="1.25" strokeDasharray="4 4" />
+        <circle cx="140" cy="85" r="42" stroke="rgba(199,125,255,0.45)" strokeWidth="1.5" />
+        <circle cx="140" cy="85" r="22" stroke="#C77DFF" strokeWidth="1.75" />
+        {[
+          { x1: 32, y1: 35 },
+          { x1: 32, y1: 85 },
+          { x1: 32, y1: 135 },
+        ].map((line, i) => (
+          <g key={i}>
+            <line
+              x1={line.x1}
+              y1={line.y1}
+              x2="126"
+              y2="85"
+              stroke="rgba(224,170,255,0.5)"
+              strokeWidth="1.5"
+            />
+            <circle cx={line.x1} cy={line.y1} r="4.5" fill="#10002B" stroke="#C77DFF" strokeWidth="2" />
+          </g>
+        ))}
+        <circle cx="140" cy="85" r="9" fill="#C77DFF" />
+        <circle cx="140" cy="85" r="3.5" fill="#FFFFFF" />
+        <line x1="158" y1="85" x2="248" y2="85" stroke="#E0AAFF" strokeWidth="1.75" strokeDasharray="4 4" />
+        <circle cx="248" cy="85" r="5" fill="#FFFFFF" />
+      </svg>
+      <span className="relative z-10 mt-3 text-[11px] font-sans uppercase tracking-[0.2em] text-white/45 group-hover:text-[#E0AAFF] transition-colors duration-300">
+        Focus → Deployment
+      </span>
+    </OptimizedTiltCard>
+  )
+}
+
+/** Geometric SVG: Objectives Execution Matrix */
+function ObjectivesMatrixVisual() {
+  const nodes = [
+    { cx: 70, cy: 42 },
+    { cx: 140, cy: 32 },
+    { cx: 210, cy: 42 },
+    { cx: 70, cy: 128 },
+    { cx: 140, cy: 138 },
+    { cx: 210, cy: 128 },
+  ]
+  return (
+    <OptimizedTiltCard className="group relative w-full rounded-none bg-white text-[var(--ink-dark)] border border-white/80 hover:border-[#C77DFF] hover:shadow-[0_16px_44px_rgba(199,125,255,0.28)] transition-all duration-300 p-6 sm:p-8 flex flex-col items-center justify-center shadow-xl overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-radial from-[#C77DFF]/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+      />
+      <svg
+        viewBox="0 0 280 170"
+        fill="none"
+        aria-hidden="true"
+        className="relative z-10 w-full max-w-[280px] h-auto transition-transform duration-500 group-hover:scale-[1.05]"
+      >
+        {nodes.map((n, idx) => (
+          <line
+            key={`l-${idx}`}
+            x1="140"
+            y1="85"
+            x2={n.cx}
+            y2={n.cy}
+            stroke="rgba(123,44,191,0.35)"
+            strokeWidth="1.5"
+          />
+        ))}
+        <polygon
+          points="70,42 140,32 210,42 210,128 140,138 70,128"
+          stroke="rgba(123,44,191,0.22)"
+          strokeWidth="1.25"
+          strokeDasharray="4 4"
+        />
+        {nodes.map((n, idx) => (
+          <g key={`n-${idx}`}>
+            <circle cx={n.cx} cy={n.cy} r="9" fill="rgba(123,44,191,0.12)" />
+            <circle cx={n.cx} cy={n.cy} r="5" fill="#FFFFFF" stroke="#7B2CBF" strokeWidth="2" />
+          </g>
+        ))}
+        <circle cx="140" cy="85" r="16" fill="rgba(123,44,191,0.12)" stroke="#7B2CBF" strokeWidth="2" />
+        <circle cx="140" cy="85" r="5.5" fill="#7B2CBF" />
+      </svg>
+      <span className="relative z-10 mt-3 text-[11px] font-sans uppercase tracking-[0.2em] text-[var(--ink-dark)]/50 group-hover:text-[#7B2CBF] transition-colors duration-300 font-semibold">
+        6 Pillars of Execution
+      </span>
+    </OptimizedTiltCard>
+  )
+}
+
 /** Center spine dot marker */
 function SpineNode({ tone = 'light' }: { tone?: 'light' | 'lavender' | 'dark' }) {
   const toneClasses =
@@ -354,7 +455,7 @@ export default function About() {
           </div>
         </motion.section>
 
-        {/* ── ROW 4: AIMS (Crisp White Band — Left: Header | Right: Interactive Cards) ── */}
+        {/* ── ROW 4: AIMS (Crisp White Band — Left: Header + Cards | Right: Diagram) ── */}
         <motion.section
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -363,38 +464,41 @@ export default function About() {
           className="group/row relative w-full bg-[var(--bg-page)] text-[var(--text-primary)] py-16 sm:py-24 border-b border-[var(--border-hairline)]"
         >
           <SpineNode tone="light" />
-          <div className="max-w-[1240px] mx-auto px-6 sm:px-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start">
-            <div className="md:text-right md:pr-4 md:pt-2">
+          <div className="max-w-[1240px] mx-auto px-6 sm:px-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
+            <div className="md:pr-4 space-y-5 text-left">
               <TitleReveal
                 as="h2"
                 hoverColor="var(--accent-orange)"
-                className="font-head font-extrabold text-3xl sm:text-4xl lg:text-[42px] text-[var(--text-primary)] tracking-tight"
+                className="font-head font-extrabold text-3xl sm:text-4xl lg:text-[42px] text-[var(--text-primary)] tracking-tight md:text-right"
               >
                 Aims
               </TitleReveal>
+              <div className="space-y-3.5">
+                {AIMS.map((aim, idx) => (
+                  <OptimizedTiltCard
+                    key={aim}
+                    className="group w-full text-left p-5 sm:p-6 rounded-none border bg-[var(--bg-surface)] text-[var(--text-primary)] border-[var(--border-hairline)] hover:bg-[var(--ink-dark)] hover:border-[var(--ink-dark)] hover:text-white hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 flex items-start gap-3.5"
+                  >
+                    <span className="w-2 h-2 rounded-full mt-2 shrink-0 bg-[var(--accent-orange)] group-hover:bg-[#C77DFF] group-hover:scale-125 transition-all duration-300" />
+                    <BlurReveal
+                      as="span"
+                      delay={idx * 0.06}
+                      className="text-[15px] sm:text-[16px] leading-relaxed font-normal text-[var(--text-muted)] group-hover:text-white transition-colors duration-300"
+                    >
+                      {aim}
+                    </BlurReveal>
+                  </OptimizedTiltCard>
+                ))}
+              </div>
             </div>
 
-            <div className="md:pl-4 space-y-3.5 text-left">
-              {AIMS.map((aim, idx) => (
-                <OptimizedTiltCard
-                  key={aim}
-                  className="group w-full text-left p-5 sm:p-6 rounded-none border bg-[var(--bg-surface)] text-[var(--text-primary)] border-[var(--border-hairline)] hover:bg-[var(--ink-dark)] hover:border-[var(--ink-dark)] hover:text-white hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 flex items-start gap-3.5"
-                >
-                  <span className="w-2 h-2 rounded-full mt-2 shrink-0 bg-[var(--accent-orange)] group-hover:bg-[#C77DFF] group-hover:scale-125 transition-all duration-300" />
-                  <BlurReveal
-                    as="span"
-                    delay={idx * 0.06}
-                    className="text-[15px] sm:text-[16px] leading-relaxed font-normal text-[var(--text-muted)] group-hover:text-white transition-colors duration-300"
-                  >
-                    {aim}
-                  </BlurReveal>
-                </OptimizedTiltCard>
-              ))}
+            <div className="md:pl-4">
+              <AimsTargetVisual />
             </div>
           </div>
         </motion.section>
 
-        {/* ── ROW 5: OBJECTIVES (Soft Lavender Band — Left: Interactive Cards | Right: Header) ── */}
+        {/* ── ROW 5: OBJECTIVES (Soft Lavender Band — Left: Diagram | Right: Header + Cards) ── */}
         <motion.section
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -403,26 +507,12 @@ export default function About() {
           className="group/row relative w-full bg-[var(--bg-surface)] text-[var(--text-primary)] py-16 sm:py-28"
         >
           <SpineNode tone="lavender" />
-          <div className="max-w-[1240px] mx-auto px-6 sm:px-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start">
-            <div className="md:pr-4 space-y-3.5 text-left order-2 md:order-1">
-              {OBJECTIVES.map((obj, idx) => (
-                <OptimizedTiltCard
-                  key={obj}
-                  className="group w-full text-left p-5 rounded-none border bg-white text-[var(--text-primary)] border-[var(--border-hairline)] hover:bg-[var(--ink-dark)] hover:border-[var(--ink-dark)] hover:text-white hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 flex items-start gap-3.5"
-                >
-                  <span className="w-2 h-2 rounded-full mt-2 shrink-0 bg-[var(--accent-orange)] group-hover:bg-[#C77DFF] group-hover:scale-125 transition-all duration-300" />
-                  <BlurReveal
-                    as="span"
-                    delay={idx * 0.05}
-                    className="text-[14.5px] sm:text-[15.5px] leading-relaxed font-normal text-[var(--text-muted)] group-hover:text-white transition-colors duration-300"
-                  >
-                    {obj}
-                  </BlurReveal>
-                </OptimizedTiltCard>
-              ))}
+          <div className="max-w-[1240px] mx-auto px-6 sm:px-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
+            <div className="md:pr-4 order-2 md:order-1">
+              <ObjectivesMatrixVisual />
             </div>
 
-            <div className="md:pl-4 md:pt-2 text-left order-1 md:order-2">
+            <div className="md:pl-4 space-y-5 text-left order-1 md:order-2">
               <TitleReveal
                 as="h2"
                 hoverColor="var(--accent-orange)"
@@ -430,6 +520,23 @@ export default function About() {
               >
                 Objectives
               </TitleReveal>
+              <div className="space-y-3.5">
+                {OBJECTIVES.map((obj, idx) => (
+                  <OptimizedTiltCard
+                    key={obj}
+                    className="group w-full text-left p-5 rounded-none border bg-white text-[var(--text-primary)] border-[var(--border-hairline)] hover:bg-[var(--ink-dark)] hover:border-[var(--ink-dark)] hover:text-white hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 flex items-start gap-3.5"
+                  >
+                    <span className="w-2 h-2 rounded-full mt-2 shrink-0 bg-[var(--accent-orange)] group-hover:bg-[#C77DFF] group-hover:scale-125 transition-all duration-300" />
+                    <BlurReveal
+                      as="span"
+                      delay={idx * 0.05}
+                      className="text-[14.5px] sm:text-[15.5px] leading-relaxed font-normal text-[var(--text-muted)] group-hover:text-white transition-colors duration-300"
+                    >
+                      {obj}
+                    </BlurReveal>
+                  </OptimizedTiltCard>
+                ))}
+              </div>
             </div>
           </div>
         </motion.section>
