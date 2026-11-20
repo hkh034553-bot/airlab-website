@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { motion, useScroll, useSpring } from 'framer-motion'
 import TitleReveal from '../components/ui/TitleReveal'
 import BlurReveal from '../components/ui/blur-reveal'
@@ -184,8 +184,6 @@ function SpineNode({ tone = 'light' }: { tone?: 'light' | 'lavender' | 'dark' })
 }
 
 export default function About() {
-  const [selectedAim, setSelectedAim] = useState<number>(0)
-  const [selectedObjective, setSelectedObjective] = useState<number>(0)
   const timelineRef = useRef<HTMLDivElement>(null)
 
   const { scrollYProgress } = useScroll({
@@ -258,9 +256,6 @@ export default function About() {
             </div>
 
             <div className="md:pl-4 space-y-4 text-left order-1 md:order-2">
-              <span className="inline-block text-[11px] font-sans font-bold uppercase tracking-[0.2em] text-[var(--accent-orange)]">
-                01 / Who We Are
-              </span>
               <TitleReveal
                 as="h2"
                 waitForPreloader
@@ -300,9 +295,6 @@ export default function About() {
           <SpineNode tone="lavender" />
           <div className="max-w-[1240px] mx-auto px-6 sm:px-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center">
             <div className="md:text-right md:pr-4 space-y-4">
-              <span className="inline-block text-[11px] font-sans font-bold uppercase tracking-[0.2em] text-[var(--accent-orange)]">
-                02 / Direction
-              </span>
               <TitleReveal
                 as="h2"
                 hoverColor="var(--accent-orange)"
@@ -344,9 +336,6 @@ export default function About() {
             </div>
 
             <div className="md:pl-4 text-left space-y-4 order-1 md:order-2">
-              <span className="inline-block text-[11px] font-sans font-bold uppercase tracking-[0.2em] text-[#E0AAFF]">
-                03 / Purpose
-              </span>
               <TitleReveal
                 as="h2"
                 hoverColor="#C77DFF"
@@ -375,10 +364,7 @@ export default function About() {
         >
           <SpineNode tone="light" />
           <div className="max-w-[1240px] mx-auto px-6 sm:px-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start">
-            <div className="md:text-right md:pr-4 md:pt-2 space-y-2">
-              <span className="inline-block text-[11px] font-sans font-bold uppercase tracking-[0.2em] text-[var(--accent-orange)]">
-                04 / Strategic Aims
-              </span>
+            <div className="md:text-right md:pr-4 md:pt-2">
               <TitleReveal
                 as="h2"
                 hoverColor="var(--accent-orange)"
@@ -389,43 +375,21 @@ export default function About() {
             </div>
 
             <div className="md:pl-4 space-y-3.5 text-left">
-              {AIMS.map((aim, idx) => {
-                const isSelected = selectedAim === idx
-                return (
-                  <OptimizedTiltCard
-                    key={aim}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelectedAim(idx)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        setSelectedAim(idx)
-                      }
-                    }}
-                    className={`group w-full text-left p-5 sm:p-6 rounded-none border transition-all duration-300 cursor-pointer flex items-start gap-3.5 ${
-                      isSelected
-                        ? 'bg-[var(--ink-dark)] text-white border-[var(--ink-dark)] shadow-xl'
-                        : 'bg-[var(--bg-surface)] text-[var(--text-primary)] border-[var(--border-hairline)] hover:bg-white hover:border-[var(--accent-orange)]/60 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(123,44,191,0.12)]'
-                    }`}
+              {AIMS.map((aim, idx) => (
+                <OptimizedTiltCard
+                  key={aim}
+                  className="group w-full text-left p-5 sm:p-6 rounded-none border bg-[var(--bg-surface)] text-[var(--text-primary)] border-[var(--border-hairline)] hover:bg-[var(--ink-dark)] hover:border-[var(--ink-dark)] hover:text-white hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 flex items-start gap-3.5"
+                >
+                  <span className="w-2 h-2 rounded-full mt-2 shrink-0 bg-[var(--accent-orange)] group-hover:bg-[#C77DFF] group-hover:scale-125 transition-all duration-300" />
+                  <BlurReveal
+                    as="span"
+                    delay={idx * 0.06}
+                    className="text-[15px] sm:text-[16px] leading-relaxed font-normal text-[var(--text-muted)] group-hover:text-white transition-colors duration-300"
                   >
-                    <span
-                      className={`w-2 h-2 rounded-full mt-2 shrink-0 transition-transform duration-300 group-hover:scale-125 ${
-                        isSelected ? 'bg-[#C77DFF]' : 'bg-[var(--accent-orange)]'
-                      }`}
-                    />
-                    <BlurReveal
-                      as="span"
-                      delay={idx * 0.06}
-                      className={`text-[15px] sm:text-[16px] leading-relaxed font-normal ${
-                        isSelected ? 'text-white font-medium' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'
-                      }`}
-                    >
-                      {aim}
-                    </BlurReveal>
-                  </OptimizedTiltCard>
-                )
-              })}
+                    {aim}
+                  </BlurReveal>
+                </OptimizedTiltCard>
+              ))}
             </div>
           </div>
         </motion.section>
@@ -441,49 +405,24 @@ export default function About() {
           <SpineNode tone="lavender" />
           <div className="max-w-[1240px] mx-auto px-6 sm:px-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start">
             <div className="md:pr-4 space-y-3.5 text-left order-2 md:order-1">
-              {OBJECTIVES.map((obj, idx) => {
-                const isSelected = selectedObjective === idx
-                return (
-                  <OptimizedTiltCard
-                    key={obj}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelectedObjective(idx)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        setSelectedObjective(idx)
-                      }
-                    }}
-                    className={`group w-full text-left p-5 rounded-none border transition-all duration-300 cursor-pointer flex items-start gap-3.5 ${
-                      isSelected
-                        ? 'bg-[var(--accent-orange)] text-white border-[var(--accent-orange)] shadow-xl'
-                        : 'bg-white text-[var(--text-primary)] border-[var(--border-hairline)] hover:border-[var(--accent-orange)]/60 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(123,44,191,0.12)]'
-                    }`}
+              {OBJECTIVES.map((obj, idx) => (
+                <OptimizedTiltCard
+                  key={obj}
+                  className="group w-full text-left p-5 rounded-none border bg-white text-[var(--text-primary)] border-[var(--border-hairline)] hover:bg-[var(--ink-dark)] hover:border-[var(--ink-dark)] hover:text-white hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300 flex items-start gap-3.5"
+                >
+                  <span className="w-2 h-2 rounded-full mt-2 shrink-0 bg-[var(--accent-orange)] group-hover:bg-[#C77DFF] group-hover:scale-125 transition-all duration-300" />
+                  <BlurReveal
+                    as="span"
+                    delay={idx * 0.05}
+                    className="text-[14.5px] sm:text-[15.5px] leading-relaxed font-normal text-[var(--text-muted)] group-hover:text-white transition-colors duration-300"
                   >
-                    <span
-                      className={`w-2 h-2 rounded-full mt-2 shrink-0 transition-transform duration-300 group-hover:scale-125 ${
-                        isSelected ? 'bg-white' : 'bg-[var(--accent-orange)]'
-                      }`}
-                    />
-                    <BlurReveal
-                      as="span"
-                      delay={idx * 0.05}
-                      className={`text-[14.5px] sm:text-[15.5px] leading-relaxed font-normal ${
-                        isSelected ? 'text-white font-medium' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'
-                      }`}
-                    >
-                      {obj}
-                    </BlurReveal>
-                  </OptimizedTiltCard>
-                )
-              })}
+                    {obj}
+                  </BlurReveal>
+                </OptimizedTiltCard>
+              ))}
             </div>
 
-            <div className="md:pl-4 md:pt-2 text-left order-1 md:order-2 space-y-2">
-              <span className="inline-block text-[11px] font-sans font-bold uppercase tracking-[0.2em] text-[var(--accent-orange)]">
-                05 / Execution
-              </span>
+            <div className="md:pl-4 md:pt-2 text-left order-1 md:order-2">
               <TitleReveal
                 as="h2"
                 hoverColor="var(--accent-orange)"
