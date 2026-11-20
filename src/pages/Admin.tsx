@@ -424,41 +424,6 @@ export default function AdminDashboard() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
-  const [downloadingBackup, setDownloadingBackup] = useState(false)
-
-  const handleDownloadBackup = async () => {
-    if (!adminUser || downloadingBackup) return
-    setDownloadingBackup(true)
-    setBannerNotice(null)
-    try {
-      const res = await fetch('/api/admin/backup', {
-        credentials: 'include',
-        cache: 'no-store',
-      })
-      if (res.status === 401) {
-        handleLogout()
-        throw new Error('Session expired. Please sign in again.')
-      }
-      if (!res.ok) {
-        throw new Error(`Backup export failed (HTTP ${res.status})`)
-      }
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      const dateStamp = new Date().toISOString().slice(0, 10)
-      a.href = url
-      a.download = `airlab-db-backup-${dateStamp}.json`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      setBannerNotice({ type: 'success', text: 'Database backup snapshot downloaded.' })
-    } catch (err: any) {
-      setBannerNotice({ type: 'error', text: err.message || 'Could not download database backup' })
-    } finally {
-      setDownloadingBackup(false)
-    }
-  }
 
   const clearLegacyStorage = () => {
     try {
@@ -1116,15 +1081,6 @@ export default function AdminDashboard() {
         </div>
 
         <div className="hidden md:block pt-6 mt-6 border-t border-[var(--border-hairline)]">
-          <button
-            type="button"
-            onClick={handleDownloadBackup}
-            disabled={downloadingBackup}
-            className="w-full mb-3 px-3 py-2 rounded-[4px] border border-[var(--border-hairline)] bg-[var(--bg-page)] hover:border-[var(--accent-orange)] text-xs font-medium text-[var(--text-primary)] flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <Download className="w-3.5 h-3.5 text-[var(--accent-orange)]" />
-            <span>{downloadingBackup ? 'Exporting Backup...' : 'Download DB Backup'}</span>
-          </button>
           <div className="text-xs text-[var(--text-muted)] mb-1">
             Signed in as <strong className="text-[var(--text-primary)]">{adminUser.name}</strong>
           </div>
@@ -1151,35 +1107,24 @@ export default function AdminDashboard() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
+          {!['applications', 'vacancy-settings', 'security'].includes(activeTab) && (
+            <InteractiveHoverButton
               type="button"
-              onClick={handleDownloadBackup}
-              disabled={downloadingBackup}
-              className="md:hidden px-3 py-2 rounded-[4px] border border-[var(--border-hairline)] bg-[var(--bg-surface)] hover:border-[var(--accent-orange)] text-xs font-medium text-[var(--text-primary)] inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-            >
-              <Download className="w-3.5 h-3.5 text-[var(--accent-orange)]" />
-              <span>{downloadingBackup ? 'Exporting...' : 'Download DB Backup'}</span>
-            </button>
-            {!['applications', 'vacancy-settings', 'security'].includes(activeTab) && (
-              <InteractiveHoverButton
-                type="button"
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  setModalError(null)
-                  setNewImageUrl('')
-                  setMemberDropdownOpen(false)
-                  setMemberDropdownSearch('')
-                  setMemberCategoryFilter('All')
-                  setEditingItem(buildDefaultItem(activeTab, items.length))
-                  setIsNew(true)
-                }}
-                icon={<Plus className="w-3.5 h-3.5" />}
-                text="Add New Entry"
-              />
-            )}
-          </div>
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setModalError(null)
+                setNewImageUrl('')
+                setMemberDropdownOpen(false)
+                setMemberDropdownSearch('')
+                setMemberCategoryFilter('All')
+                setEditingItem(buildDefaultItem(activeTab, items.length))
+                setIsNew(true)
+              }}
+              icon={<Plus className="w-3.5 h-3.5" />}
+              text="Add New Entry"
+            />
+          )}
         </header>
 
         {bannerNotice && (

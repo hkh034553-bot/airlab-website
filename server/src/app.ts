@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { type Request, type Response, type NextFunction } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import compression from 'compression'
@@ -13,7 +13,35 @@ import { authRouter } from './routes/auth.js'
 import { applicationsRouter } from './routes/applications.js'
 import { adminCrudRouter } from './routes/admin.js'
 import { settingsRouter } from './routes/settings.js'
+import { verifyAdminFromCookie } from './middleware/auth.js'
 import { errorHandler, notFound } from './middleware/errors.js'
+
+const VERCEL_PREVIEW_RE = /^https:\/\/airlab-website-[a-z0-9-]+\.vercel\.app$/
+
+export function isAllowedOrigin(origin: string): boolean {
+  const normalized = origin.replace(/\/+$/, '')
+  const allowed = new Set<string>([
+    ...env.CORS_ORIGINS.map(o => o.replace(/\/+$/, '')),
+    'https://airlab-website-peach.vercel.app',
+  ])
+  if (!isProd) {
+    allowed.add('http://localhost:5173')
+  }
+  if (allowed.has(normalized)) return true
+  if (VERCEL_PREVIEW_RE.test(normalized)) return true
+  return false
+}
+
+function enforceCsrfOrigin(req: Request, res: Response, next: NextFunction) {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+    return next()
+  }
+  const origin = req.headers.origin
+  if (origin && !isAllowedOrigin(origin)) {
+    return res.status(403).json({ error: 'Forbidden: untrusted origin' })
+  }
+  next()
+}
 
 export function createApp() {
   const app = express()
@@ -22,53 +50,44 @@ export function createApp() {
   app.set('trust proxy', 1)
   app.disable('x-powered-by')
 
-  const allowedOrigins = new Set(env.CORS_ORIGINS.map(o => o.replace(/\/+$/, '')))
-  if (env.PUBLIC_SITE_URL) {
-    allowedOrigins.add(env.PUBLIC_SITE_URL.replace(/\/+$/, ''))
-  }
-
   app.use(helmet())
   app.use(compression())
   app.use(
     cors({
       origin: (origin, callback) => {
-        // Same-origin / non-browser requests (no Origin header)
+        // Allow requests with no Origin header (same-origin, curl)
         if (!origin) {
-          callback(null, true)
-          return
+          return callback(null, true)
         }
-        const normalized = origin.replace(/\/+$/, '')
-        if (allowedOrigins.has(normalized)) {
-          callback(null, true)
-          return
+        if (isAllowedOrigin(origin)) {
+          return callback(null, true)
         }
-        try {
-          const parsed = new URL(normalized)
-          const host = parsed.hostname.toLowerCase()
-          const isLocal = host === 'localhost' || host === '127.0.0.1'
-          const isVercel = host.endsWith('.vercel.app')
-          if (isLocal || isVercel) {
-            callback(null, true)
-            return
-          }
-        } catch {
-          // invalid origin URL
-        }
-        callback(null, false)
+        // Reject untrusted origin by omitting CORS headers without throwing a 500
+        return callback(null, false)
       },
-      credentials: true, // admin auth uses httpOnly cookies / bearer tokens
+      credentials: true, // admin auth uses httpOnly cookies
     }),
   )
+  app.use(cookieParser())
+  app.use(morgan(isProd ? 'combined' : 'dev'))
+
+  // Mount /api/admin with its own 10mb JSON parser (inside adminCrudRouter) before the global 100kb parser
+  app.use('/api/admin', enforceCsrfOrigin, adminCrudRouter)
+
+  // Global JSON body limit of 100kb for all non-admin routes (skips if body is already parsed)
   app.use((req, res, next) => {
     if (req.body !== undefined && typeof req.body === 'object') {
       return next()
     }
-    express.json({ limit: '10mb' })(req, res, next)
+    express.json({ limit: '100kb' })(req, res, next)
   })
-  app.use(cookieParser())
-  app.use(morgan(isProd ? 'combined' : 'dev'))
 
-  app.get('/api/health', (_req, res) => {
+  app.get('/api/health', async (req, res) => {
+    const admin = await verifyAdminFromCookie(req)
+    if (!admin) {
+      res.json({ status: 'ok' })
+      return
+    }
     const dbStates: Record<number, string> = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' }
     res.json({
       status: 'ok',
@@ -77,12 +96,14 @@ export function createApp() {
     })
   })
 
+  app.use('/api/auth/change-password', enforceCsrfOrigin)
+  app.use('/api/applications/admin', enforceCsrfOrigin)
+
   app.use('/api/auth', authRouter)
   app.use('/api/content', contentRouter)
   app.use('/api/media', mediaRouter)
   app.use('/api/positions', positionsRouter)
   app.use('/api/applications', applicationsRouter)
-  app.use('/api/admin', adminCrudRouter)
   app.use('/api/settings', settingsRouter)
 
   app.use('/api', notFound)

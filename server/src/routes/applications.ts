@@ -4,17 +4,18 @@ import mongoose from 'mongoose'
 import { z } from 'zod'
 import { ApplicationModel, APPLICATION_STATUSES } from '../models/Application.js'
 import { PositionModel } from '../models/Position.js'
-import { MediaBlobModel } from '../models/MediaBlob.js'
 import { HttpError } from '../middleware/errors.js'
 import { requireAdmin } from '../middleware/auth.js'
+import { createRateLimiter, getClientIp } from '../middleware/rateLimit.js'
 import { sendApplicationNotification } from '../services/email.js'
 import { getVacancySettings } from '../services/siteSettings.js'
+import { env } from '../config/env.js'
 import { connectDB } from '../db.js'
 import { extractBlobIdsFromDoc, deleteMediaBlobsByIds } from '../services/mediaStorage.js'
 
 export const applicationsRouter = Router()
 
-const MAX_CV_BYTES = 4 * 1024 * 1024 // 4 MB (safely under Vercel's 4.5 MB serverless payload limit)
+const MAX_CV_BYTES = 4 * 1024 * 1024 // 4 MB (below Vercel's ~4.5 MB request body limit)
 
 // Memory storage keeps file buffers accessible for serverless / cloud deployment
 const upload = multer({
@@ -29,102 +30,113 @@ const upload = multer({
   },
 })
 
-function hasPdfMagicBytes(buf: Buffer): boolean {
-  if (!buf || buf.length < 5) return false
-  // Standard PDF header starts with "%PDF-" (occasionally preceded by UTF-8 BOM)
-  const headerSlice = buf.subarray(0, 16).toString('latin1')
-  return headerSlice.includes('%PDF-')
-}
-
-// Per-IP submission rate limiter: max 5 applications per IP per hour
-interface SubmissionRateRecord {
-  count: number
-  windowStart: number
-}
-const submissionAttempts = new Map<string, SubmissionRateRecord>()
-const MAX_SUBMISSIONS_PER_WINDOW = 5
-const SUBMISSION_WINDOW_MS = 60 * 60 * 1000 // 1 hour
-
-function checkSubmissionRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const rec = submissionAttempts.get(ip)
-  if (!rec || now - rec.windowStart > SUBMISSION_WINDOW_MS) {
-    submissionAttempts.set(ip, { count: 1, windowStart: now })
-    return true
-  }
-  if (rec.count >= MAX_SUBMISSIONS_PER_WINDOW) {
-    return false
-  }
-  rec.count += 1
-  return true
-}
-
-const optionalTrimmed = (maxLen: number) =>
+const optionalHttpsUrl = z.preprocess(
+  (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
   z
     .string()
     .trim()
-    .max(maxLen)
-    .optional()
-    .or(z.literal(''))
-    .transform(v => (v ? v : undefined))
+    .max(500)
+    .url('Must be a valid URL')
+    .refine((u) => u.startsWith('https://'), 'Must be an absolute https:// URL')
+    .optional(),
+)
 
-const ApplicationInputSchema = z.object({
-  positionId: optionalTrimmed(64),
-  positionTitle: optionalTrimmed(160),
-  designation: optionalTrimmed(160),
-  name: z.string().trim().min(2, 'Full name is required').max(120, 'Name is too long'),
-  email: z.string().trim().email('Please provide a valid email address').max(254),
-  phone: z.string().trim().min(4, 'Phone number is required').max(40, 'Phone number is too long'),
-  university: z.string().trim().min(2, 'University is required').max(200),
-  degreeYear: z.string().trim().min(2, 'Academic program / degree year is required').max(240),
-  rollNo: optionalTrimmed(60),
-  department: optionalTrimmed(140),
-  program: optionalTrimmed(140),
-  track: optionalTrimmed(160),
-  statement: optionalTrimmed(3000),
-  coverNote: optionalTrimmed(3000),
-  github: optionalTrimmed(500),
-  linkedin: optionalTrimmed(500),
-  resumeUrl: optionalTrimmed(500),
-  // Hidden honeypot field: real users leave this empty
-  website: z.string().optional().default(''),
-})
+const optionalObjectId = z.preprocess(
+  (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+  z
+    .string()
+    .trim()
+    .refine((val) => mongoose.Types.ObjectId.isValid(val), 'Invalid positionId')
+    .optional(),
+)
+
+const ApplicationBodySchema = z
+  .object({
+    name: z.string().trim().min(1, 'Name is required').max(120),
+    email: z.string().trim().email('Invalid email address').max(254),
+    phone: z.string().trim().min(1, 'Phone is required').max(30),
+    university: z.string().trim().min(1, 'University is required').max(200),
+    degreeYear: z.string().trim().min(1, 'Degree / Year is required').max(50),
+    rollNo: z.string().trim().max(100).optional(),
+    department: z.string().trim().max(100).optional(),
+    program: z.string().trim().max(100).optional(),
+    track: z.string().trim().max(100).optional(),
+    statement: z.string().trim().max(3000).optional(),
+    coverNote: z.string().trim().max(3000).optional(),
+    github: optionalHttpsUrl,
+    linkedin: optionalHttpsUrl,
+    resumeUrl: optionalHttpsUrl,
+    positionId: optionalObjectId,
+    positionTitle: z.string().trim().max(150).optional(),
+    designation: z.string().trim().max(150).optional(),
+    turnstileToken: z.string().trim().max(2048).optional(),
+  })
+  .strip()
+
+const applicationLimiter = createRateLimiter([
+  {
+    prefix: 'app:1h',
+    max: 3,
+    windowSeconds: 60 * 60,
+    message:
+      'You have submitted the maximum number of applications allowed per hour (3). Please wait a while before applying again.',
+  },
+  {
+    prefix: 'app:24h',
+    max: 20,
+    windowSeconds: 24 * 60 * 60,
+    message:
+      'Daily application limit reached for this network (20 per 24 hours). Please try again tomorrow.',
+  },
+])
+
+async function verifyTurnstileToken(token: string | undefined, remoteIp: string): Promise<boolean> {
+  const secret = env.TURNSTILE_SECRET_KEY?.trim()
+  if (!secret) return true
+  if (!token) return false
+
+  try {
+    const form = new URLSearchParams()
+    form.set('secret', secret)
+    form.set('response', token)
+    if (remoteIp && remoteIp !== 'unknown') {
+      form.set('remoteip', remoteIp)
+    }
+    const resp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form.toString(),
+    })
+    if (!resp.ok) return false
+    const result = (await resp.json()) as { success?: boolean }
+    return result?.success === true
+  } catch {
+    return false
+  }
+}
 
 // Public endpoint for submitting applications
-applicationsRouter.post('/', upload.single('cv'), async (req, res, next) => {
+applicationsRouter.post('/', applicationLimiter, upload.single('cv'), async (req, res, next) => {
   try {
-    const clientIp = req.ip || req.socket.remoteAddress || 'unknown'
-    if (!checkSubmissionRateLimit(clientIp)) {
-      throw new HttpError(
-        429,
-        'Too many application submissions from this IP address. Please try again in an hour.',
-      )
-    }
-
-    const parsed = ApplicationInputSchema.safeParse(req.body ?? {})
-    if (!parsed.success) {
-      const firstIssue = parsed.error.issues[0]
-      throw new HttpError(400, firstIssue?.message || 'Invalid application fields')
-    }
-
-    const input = parsed.data
-
-    // Honeypot check: silently return fake 201 so bots think they succeeded
-    if (input.website && input.website.trim().length > 0) {
-      res.status(201).json({
-        success: true,
-        message: 'Application successfully received by the AIR Lab committee!',
-        id: 'honeypot-' + Date.now(),
-      })
-      return
-    }
-
     if (req.file) {
       if (req.file.size > MAX_CV_BYTES) {
         throw new HttpError(400, 'Resume PDF must be 4 MB or smaller')
       }
-      if (!hasPdfMagicBytes(req.file.buffer)) {
+      const magic = req.file.buffer.subarray(0, 5).toString('ascii')
+      if (magic !== '%PDF-') {
         throw new HttpError(400, 'Uploaded file is not a valid PDF document')
+      }
+    }
+
+    const parsedBody = ApplicationBodySchema.parse(req.body ?? {})
+
+    if (env.TURNSTILE_SECRET_KEY?.trim()) {
+      const turnstileOk = await verifyTurnstileToken(parsedBody.turnstileToken, getClientIp(req))
+      if (!turnstileOk) {
+        throw new HttpError(
+          400,
+          'CAPTCHA verification failed. Please complete the challenge and try again.',
+        )
       }
     }
 
@@ -136,18 +148,32 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res, next) => {
       }
     }
 
+    const {
+      positionId,
+      name,
+      email,
+      phone,
+      university,
+      degreeYear,
+      coverNote,
+      github,
+      linkedin,
+      resumeUrl,
+      rollNo,
+      department,
+      program,
+      track,
+      statement,
+    } = parsedBody
+    const positionTitleFromBody = parsedBody.positionTitle || parsedBody.designation
+
     const vacancy = await getVacancySettings()
     if (vacancy.status === 'Closed') {
       throw new HttpError(403, vacancy.closedMessage)
     }
 
-    const positionTitleFromBody = input.positionTitle || input.designation
-
     // Verify position or select default
-    let assignedPosition: unknown =
-      input.positionId && mongoose.Types.ObjectId.isValid(input.positionId)
-        ? input.positionId
-        : undefined
+    let assignedPosition: any = positionId
     try {
       if (!assignedPosition && mongoose.connection.readyState === 1) {
         const defaultPos = await PositionModel.findOne({ isOpen: true }).maxTimeMS(2000)
@@ -157,25 +183,11 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res, next) => {
       // Ignore position lookup error
     }
 
-    // Store uploaded PDF in dedicated MediaBlobModel collection instead of inline base64
-    let cvData = {
-      key: input.resumeUrl || 'attached',
-      originalName: req.file ? req.file.originalname : 'resume.pdf',
+    // Never store client input in cv.key: only server-generated data URI or literal 'none'
+    const cvData = {
+      key: req.file ? `data:application/pdf;base64,${req.file.buffer.toString('base64')}` : 'none',
+      originalName: req.file ? req.file.originalname : undefined,
       size: req.file ? req.file.size : 0,
-    }
-
-    if (req.file && mongoose.connection.readyState === 1) {
-      try {
-        const blob = await MediaBlobModel.create({
-          mimeType: 'application/pdf',
-          data: req.file.buffer,
-          size: req.file.size,
-          sourceSlug: 'applications',
-        })
-        cvData.key = `/api/media/blob/${String(blob._id)}`
-      } catch (blobErr) {
-        console.warn('⚠️ Failed to store CV in MediaBlobModel, falling back to resumeUrl/attached:', blobErr)
-      }
     }
 
     let applicationId = 'temp-' + Date.now()
@@ -186,19 +198,20 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res, next) => {
           position: assignedPosition,
           positionTitle: positionTitleFromBody || 'Research Intern',
           designation: positionTitleFromBody || 'Research Intern',
-          name: input.name,
-          email: input.email,
-          phone: input.phone,
-          university: input.university,
-          degreeYear: input.degreeYear,
-          rollNo: input.rollNo,
-          department: input.department,
-          program: input.program,
-          track: input.track,
-          statement: input.statement,
-          coverNote: input.coverNote,
-          github: input.github,
-          linkedin: input.linkedin,
+          name,
+          email,
+          phone,
+          university,
+          degreeYear,
+          rollNo,
+          department,
+          program,
+          track,
+          statement,
+          coverNote,
+          github,
+          linkedin,
+          resumeUrl,
           cv: cvData,
           status: 'New',
         })
@@ -206,10 +219,13 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res, next) => {
         savedToDb = true
       }
     } catch (dbErr) {
-      console.warn('⚠️ Could not save to DB (Atlas IP whitelist / connection timeout), proceeding with email delivery:', dbErr)
+      console.warn(
+        '⚠️ Could not save to DB (Atlas IP whitelist / connection timeout), proceeding with email delivery:',
+        dbErr,
+      )
     }
 
-    console.log(`📩 Application received from ${input.name} (${input.email})`)
+    console.log(`📩 Application received from ${name} (${email})`)
 
     let positionTitle: string | undefined = positionTitleFromBody
     try {
@@ -221,19 +237,18 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res, next) => {
       // ignore
     }
 
-    // Dispatch notification email to admin and confirmation to applicant
-    let emailDelivered = false
+    // Dispatch notification email to admin and confirmation to applicant (never fails the request)
     try {
       const emailResult = await sendApplicationNotification({
-        applicantName: input.name,
-        applicantEmail: input.email,
-        applicantPhone: input.phone,
-        university: input.university,
-        degreeYear: input.degreeYear,
+        applicantName: name,
+        applicantEmail: email,
+        applicantPhone: phone,
+        university,
+        degreeYear,
         positionTitle: positionTitle || 'Research Intern',
-        coverNote: input.coverNote,
-        github: input.github,
-        linkedin: input.linkedin,
+        coverNote,
+        github,
+        linkedin,
         cvFile: req.file
           ? {
               originalName: req.file.originalname,
@@ -242,19 +257,13 @@ applicationsRouter.post('/', upload.single('cv'), async (req, res, next) => {
             }
           : undefined,
       })
-      emailDelivered = Boolean(emailResult?.sent)
-      if (savedToDb && emailDelivered && mongoose.Types.ObjectId.isValid(applicationId)) {
-        await ApplicationModel.findByIdAndUpdate(applicationId, { $set: { emailSent: true } }).catch(() => {})
+      if (savedToDb && emailResult?.sent && mongoose.Types.ObjectId.isValid(applicationId)) {
+        await ApplicationModel.findByIdAndUpdate(applicationId, { $set: { emailSent: true } }).catch(
+          () => {},
+        )
       }
     } catch (emailErr) {
       console.error('⚠️ Failed to dispatch application notification email:', emailErr)
-    }
-
-    if (!savedToDb && !emailDelivered) {
-      throw new HttpError(
-        503,
-        'Our application service is temporarily unavailable. Please try again in a few moments or email your CV to contact@airlab.neduet.edu.pk.',
-      )
     }
 
     res.status(201).json({
@@ -275,28 +284,13 @@ applicationsRouter.get('/admin', requireAdmin, async (_req, res, next) => {
       .sort({ createdAt: -1 })
       .maxTimeMS(10000)
       .lean()
-
-    // Ensure inline base64 blobs are never transferred in the admin list payload
-    const sanitized = applications.map((app: any) => {
-      if (typeof app?.cv?.key === 'string' && app.cv.key.startsWith('data:')) {
-        return {
-          ...app,
-          cv: {
-            ...app.cv,
-            key: `/api/applications/admin/${String(app._id)}/cv`,
-          },
-        }
-      }
-      return app
-    })
-
-    res.json(sanitized)
+    res.json(applications)
   } catch (err) {
     next(err)
   }
 })
 
-// Fallback streaming endpoint for any legacy application with an inline base64 CV
+// Fallback streaming endpoint for any application CV
 applicationsRouter.get('/admin/:id/cv', requireAdmin, async (req, res, next) => {
   try {
     const id = String(req.params.id)
@@ -304,22 +298,22 @@ applicationsRouter.get('/admin/:id/cv', requireAdmin, async (req, res, next) => 
       throw new HttpError(400, 'Invalid application ID')
     }
     const app: any = await ApplicationModel.findById(id).select('cv').lean()
-    if (!app?.cv?.key) {
+    if (!app?.cv?.key || app.cv.key === 'none') {
       throw new HttpError(404, 'CV not found')
     }
     if (app.cv.key.startsWith('/api/media/blob/')) {
       res.redirect(app.cv.key)
       return
     }
-    const match = /^data:([\w/+.-]+);base64,(.*)$/s.exec(app.cv.key)
+    const match = /^data:(application\/pdf);base64,(.*)$/s.exec(app.cv.key)
     if (!match) {
-      res.redirect(app.cv.key)
-      return
+      throw new HttpError(404, 'CV not found')
     }
     const [, mime, b64] = match
     res.set({
-      'Content-Type': mime || 'application/pdf',
-      'Content-Disposition': `inline; filename="${encodeURIComponent(app.cv.originalName || 'resume.pdf')}"`,
+      'Content-Type': mime,
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(app.cv.originalName || 'resume.pdf')}"`,
     })
     res.send(Buffer.from(b64, 'base64'))
   } catch (err) {
@@ -344,7 +338,7 @@ applicationsRouter.patch('/admin/:id/status', requireAdmin, async (req, res, nex
     const app = await ApplicationModel.findByIdAndUpdate(
       id,
       { $set: update },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     )
     if (!app) throw new HttpError(404, 'Application not found')
     res.json(app)

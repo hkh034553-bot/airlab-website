@@ -165,8 +165,8 @@ export default function StudentApplicationModal({ isOpen, onClose }: StudentAppl
       data.append('designation', formData.designation)
       data.append('positionTitle', formData.designation)
       data.append('university', 'NED University of Engineering & Technology')
-      data.append('degreeYear', `${formData.designation} — ${formData.program} (${formData.department}) - Roll: ${formData.rollNo}`)
-      data.append('coverNote', `[Designation: ${formData.designation} | Track: ${formData.track}] ${formData.statement}`)
+      data.append('degreeYear', formData.program.slice(0, 50))
+      data.append('coverNote', `[Designation: ${formData.designation} | Track: ${formData.track}] ${formData.statement}`.slice(0, 3000))
       data.append('github', formData.resumeUrl)
       data.append('resumeUrl', formData.resumeUrl)
       // Structured fields for clean database storage and admin review
