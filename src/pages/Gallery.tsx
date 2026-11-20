@@ -7,6 +7,8 @@ import { extractPerformerPhotos, normalizeDbPerformers } from '../lib/performers
 import { fetchCollection, readCachedCollection } from '../lib/contentFetch'
 import TitleReveal from '../components/ui/TitleReveal'
 import OptimizedTiltCard from '@/components/ui/optimized-tilt-card'
+import { ZoomParallax } from '@/components/ui/zoom-parallax'
+import { cn } from '@/lib/utils'
 
 const GALLERY_FILTERS = ['All', 'Events', 'Session', 'Mentoring', 'Lab'] as const
 type GalleryFilter = (typeof GALLERY_FILTERS)[number]
@@ -180,6 +182,17 @@ export default function Gallery() {
     return galleryCards.filter(card => card.cat === activeFilter)
   }, [allCards, galleryCards, activeFilter])
 
+  const parallaxImages = useMemo(
+    () =>
+      filteredCards.slice(0, 7).map(card => ({
+        src: card.url,
+        alt: card.caption || card.title,
+        title: card.title,
+        category: card.cat,
+      })),
+    [filteredCards]
+  )
+
   const selectedCard = selectedIndex !== null ? filteredCards[selectedIndex] ?? null : null
 
   const goPrev = useCallback(() => {
@@ -216,124 +229,152 @@ export default function Gallery() {
   }, [selectedIndex, goPrev, goNext])
 
   return (
-    <div className="min-h-screen pt-16 sm:pt-24 pb-28 px-4 sm:px-8 max-w-[1240px] mx-auto relative font-sans text-[var(--text-primary)]">
-      {/* Header */}
-      <div className="mb-8 text-left max-w-3xl">
-        <TitleReveal
-          as="h1"
-          waitForPreloader
-          className="font-head font-semibold text-[var(--text-primary)] tracking-tight"
-        >
-          Lab Gallery
-        </TitleReveal>
-      </div>
+    <div className="min-h-screen pt-16 sm:pt-24 pb-28 relative font-sans text-[var(--text-primary)]">
+      <div className="px-4 sm:px-8 max-w-[1240px] mx-auto">
+        {/* Header */}
+        <div className="mb-8 text-left max-w-3xl">
+          <TitleReveal
+            as="h1"
+            waitForPreloader
+            className="font-head font-semibold text-[var(--text-primary)] tracking-tight"
+          >
+            Lab Gallery
+          </TitleReveal>
+        </div>
 
-      {/* Category Filter Pills */}
-      <div className="mb-10 text-left">
-        <div className="inline-flex flex-wrap items-center gap-1.5 p-1.5 rounded-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] shadow-2xs w-fit">
-          {GALLERY_FILTERS.map(filter => {
-            const isActive = activeFilter === filter
-            return (
-              <button
-                key={filter}
-                type="button"
-                onClick={() => {
-                  setActiveFilter(filter)
-                  setSelectedIndex(null)
-                }}
-                className={`relative px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-colors cursor-pointer select-none ${
-                  isActive
-                    ? 'text-white'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-                }`}
-              >
-                {isActive && (
-                  <motion.span
-                    layoutId="galleryActiveFilterPill"
-                    className="absolute inset-0 rounded-full bg-[var(--accent-orange)] shadow-xs"
-                    transition={{ type: 'spring', stiffness: 480, damping: 34 }}
-                  />
-                )}
-                <span className="relative z-10">{filter}</span>
-              </button>
-            )
-          })}
+        {/* Category Filter Pills */}
+        <div className="mb-10 text-left">
+          <div className="inline-flex flex-wrap items-center gap-1.5 p-1.5 rounded-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] shadow-2xs w-fit">
+            {GALLERY_FILTERS.map(filter => {
+              const isActive = activeFilter === filter
+              return (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => {
+                    setActiveFilter(filter)
+                    setSelectedIndex(null)
+                  }}
+                  className={`relative px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-colors cursor-pointer select-none ${
+                    isActive
+                      ? 'text-white'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  {isActive && (
+                    <motion.span
+                      layoutId="galleryActiveFilterPill"
+                      className="absolute inset-0 rounded-full bg-[var(--accent-orange)] shadow-xs"
+                      transition={{ type: 'spring', stiffness: 480, damping: 34 }}
+                    />
+                  )}
+                  <span className="relative z-10">{filter}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Image Grid with 24px Rounded Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 grid-flow-dense auto-rows-[300px] gap-6 text-left">
-        {loading ? (
-          Array.from({ length: 6 }).map((_, idx) => (
+      {/* Zoom Parallax Showcase (automatically adjusts for category image count & skips when empty) */}
+      {!loading && parallaxImages.length > 0 && (
+        <section className="relative w-full mb-16">
+          <div className="relative flex py-6 items-center justify-center overflow-hidden">
             <div
-              key={idx}
-              className="h-full rounded-none border border-[var(--border-hairline)] bg-[var(--bg-surface)] animate-pulse"
+              aria-hidden="true"
+              className={cn(
+                'pointer-events-none absolute -top-1/2 left-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 rounded-full',
+                'bg-[radial-gradient(ellipse_at_center,--theme(--color-foreground/.08),transparent_50%)]',
+                'blur-[30px]'
+              )}
             />
-          ))
-        ) : filteredCards.length === 0 ? (
-          <div className="col-span-full text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-none bg-[var(--bg-surface)]">
-            <p className="text-sm font-sans text-[var(--text-muted)]">
-              {allCards.length === 0
-                ? 'No gallery photos published yet.'
-                : 'No media items found in this category.'}
+            <p className="text-center text-xs sm:text-sm font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+              Scroll Down for {activeFilter === 'All' ? 'Lab' : activeFilter} Zoom Parallax
             </p>
           </div>
-        ) : (
-          filteredCards.map((card, i) => {
-            const isLoaded = Boolean(loadedKeys[card.key])
-            const isPriority = i < 4
-            return (
+          <ZoomParallax
+            key={activeFilter}
+            images={parallaxImages}
+            onImageClick={idx => setSelectedIndex(idx)}
+          />
+        </section>
+      )}
+
+      {/* Image Grid / Empty Category State */}
+      <div className="px-4 sm:px-8 max-w-[1240px] mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 grid-flow-dense auto-rows-[300px] gap-6 text-left">
+          {loading ? (
+            Array.from({ length: 6 }).map((_, idx) => (
               <div
-                key={card.key}
-                className={`${card.span || BENTO_SPANS[i % BENTO_SPANS.length]} h-full`}
-              >
-                <OptimizedTiltCard
-                  onClick={() => setSelectedIndex(i)}
-                  className="h-full rounded-none border border-[var(--border-hairline)] bg-[var(--bg-surface)] cursor-pointer shadow-sm hover:border-[var(--accent-orange)]/50 hover:shadow-lg transition-colors duration-300"
-                  style={{ transitionDelay: `${i * 30}ms` }}
+                key={idx}
+                className="h-full rounded-none border border-[var(--border-hairline)] bg-[var(--bg-surface)] animate-pulse"
+              />
+            ))
+          ) : filteredCards.length === 0 ? (
+            <div className="col-span-full text-center py-20 border border-dashed border-[var(--border-hairline)] rounded-none bg-[var(--bg-surface)]">
+              <p className="text-sm font-sans text-[var(--text-muted)]">
+                {allCards.length === 0
+                  ? 'No gallery photos published yet.'
+                  : 'No media items found in this category.'}
+              </p>
+            </div>
+          ) : (
+            filteredCards.map((card, i) => {
+              const isLoaded = Boolean(loadedKeys[card.key])
+              const isPriority = i < 4
+              return (
+                <div
+                  key={card.key}
+                  className={`${card.span || BENTO_SPANS[i % BENTO_SPANS.length]} h-full`}
                 >
-                  {!isLoaded && (
-                    <div className="absolute inset-0 bg-[var(--surface-alt)] animate-pulse pointer-events-none" />
-                  )}
-                  <img
-                    src={card.url}
-                    alt={card.caption || card.title}
-                    onLoad={() => setLoadedKeys(prev => (prev[card.key] ? prev : { ...prev, [card.key]: true }))}
-                    onError={() => setLoadedKeys(prev => (prev[card.key] ? prev : { ...prev, [card.key]: true }))}
-                    className={`w-full h-full object-cover group-hover:scale-105 transition-[transform,opacity] duration-500 ${
-                      isLoaded ? 'opacity-100' : 'opacity-0'
-                    }`}
-                    loading={isPriority ? 'eager' : 'lazy'}
-                    fetchPriority={isPriority ? 'high' : 'auto'}
-                    decoding="async"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-
-                  <div className="absolute top-4 left-4 pointer-events-none">
-                    <span className="px-3 py-1 rounded-full bg-black/55 text-white text-[11px] font-semibold backdrop-blur-sm border border-white/15">
-                      {card.cat}
-                    </span>
-                  </div>
-
-                  <div className="absolute top-4 right-4 pointer-events-none">
-                    <span className="p-2 rounded-full bg-black/60 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center shadow-xs">
-                      <Maximize2 className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-
-                  <div className="absolute bottom-5 left-5 right-5 pointer-events-none">
-                    <h3 className="text-base sm:text-lg font-semibold font-head text-white leading-tight mb-1">
-                      {card.title}
-                    </h3>
-                    {card.caption && (
-                      <p className="text-xs text-white/80 line-clamp-1">{card.caption}</p>
+                  <OptimizedTiltCard
+                    onClick={() => setSelectedIndex(i)}
+                    className="h-full rounded-none border border-[var(--border-hairline)] bg-[var(--bg-surface)] cursor-pointer shadow-sm hover:border-[var(--accent-orange)]/50 hover:shadow-lg transition-colors duration-300"
+                    style={{ transitionDelay: `${i * 30}ms` }}
+                  >
+                    {!isLoaded && (
+                      <div className="absolute inset-0 bg-[var(--surface-alt)] animate-pulse pointer-events-none" />
                     )}
-                  </div>
-                </OptimizedTiltCard>
-              </div>
-            )
-          })
-        )}
+                    <img
+                      src={card.url}
+                      alt={card.caption || card.title}
+                      onLoad={() => setLoadedKeys(prev => (prev[card.key] ? prev : { ...prev, [card.key]: true }))}
+                      onError={() => setLoadedKeys(prev => (prev[card.key] ? prev : { ...prev, [card.key]: true }))}
+                      className={`w-full h-full object-cover group-hover:scale-105 transition-[transform,opacity] duration-500 ${
+                        isLoaded ? 'opacity-100' : 'opacity-0'
+                      }`}
+                      loading={isPriority ? 'eager' : 'lazy'}
+                      fetchPriority={isPriority ? 'high' : 'auto'}
+                      decoding="async"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+
+                    <div className="absolute top-4 left-4 pointer-events-none">
+                      <span className="px-3 py-1 rounded-full bg-black/55 text-white text-[11px] font-semibold backdrop-blur-sm border border-white/15">
+                        {card.cat}
+                      </span>
+                    </div>
+
+                    <div className="absolute top-4 right-4 pointer-events-none">
+                      <span className="p-2 rounded-full bg-black/60 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center shadow-xs">
+                        <Maximize2 className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
+
+                    <div className="absolute bottom-5 left-5 right-5 pointer-events-none">
+                      <h3 className="text-base sm:text-lg font-semibold font-head text-white leading-tight mb-1">
+                        {card.title}
+                      </h3>
+                      {card.caption && (
+                        <p className="text-xs text-white/80 line-clamp-1">{card.caption}</p>
+                      )}
+                    </div>
+                  </OptimizedTiltCard>
+                </div>
+              )
+            })
+          )}
+        </div>
       </div>
 
       {/* Lightbox Modal rendered via Portal */}
